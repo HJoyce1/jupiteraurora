@@ -16,10 +16,8 @@ import datetime as dt
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import spiceypy as spice
-# import joy_model_python as jmp
-from matplotlib import path
-import mag_data_calculations as mdc
-import math 
+import mag_data_calculations as mdc 
+import joy_model_python as jmp
 import propagation_time_sw as ptsw
 import reconnection_voltage as rv
 
@@ -35,11 +33,8 @@ sw_end = 54785 # final data point for relevant solar wind section
 
 # load in dataframes
 sw_df = pd.read_csv(root_folder+'solar_wind_data.csv')
-mp_bs_loc_df = pd.read_csv(root_folder+'mp_bs_locs_df.csv')
 juno_loc = pd.read_csv(root_folder+'juno_position_df.csv',delimiter=',')
 mag_df = pd.read_csv(root_folder+'mag_30sec_df.csv')
-#travel_times = pd.read_csv(root_folder+'travel_times_sw_df.csv')
-ll_rec_df = pd.read_csv(root_folder+'ll_recon.csv',delimiter=',')
 
 
 # grab arrays needed from mag dataframe
@@ -67,21 +62,29 @@ sw_uncertainty_array = sw_df['V_KMPS_UNCERTAINTY'].to_numpy() # uncertainty in s
 pressure_array = pressure_array[0:sw_end]
 sw_speed_array = sw_speed_array[0:sw_end]
 
+nose_locs_mp, nose_locs_bs = jmp.multi_nose(pressure_array)
+
+nose_locs_mp_km = []
+nose_locs_bs_km = []
+# loop through magnetopause and bow shock locations to convert to km
+for i in range(len(nose_locs_mp)):
+    # magnetopause
+    mp =  nose_locs_mp[i]*RJ
+    nose_locs_mp_km.append(mp)
+    # bowshock
+    bs =  nose_locs_bs[i]*RJ
+    nose_locs_bs_km.append(bs)
+
 # juno position arrays
 X_juno = juno_loc['X'].to_numpy()
 Y_juno = juno_loc['Y'].to_numpy()
 X_juno_RJ = juno_loc['XRJ'].to_numpy()
 Y_juno_RJ = juno_loc['YRJ'].to_numpy()
-# grab arrays from bow shock and magnetopause locations
-nose_locs_bs_km = mp_bs_loc_df['Bow_Shock_Location_km'].to_numpy()
-nose_locs_mp_km = mp_bs_loc_df['Magnetopause_Location_km'].to_numpy()
-nose_locs_bs = mp_bs_loc_df['Bow_Shock_Location_RJ']
-nose_locs_mp = mp_bs_loc_df['Magnetopause_Location_RJ'].to_numpy()
 
 fig = plt.figure(figsize=(20,5))
 ax1 = plt.subplot(1,1,1)
-ax1.scatter(np.linspace(0,82422,82422),nose_locs_mp_km,s=0.01)
-ax1.scatter(np.linspace(0,82422,len(nose_locs_mp_km)),nose_locs_bs_km,s=0.01)
+ax1.scatter(np.linspace(0,sw_end,len(nose_locs_mp_km)),nose_locs_mp_km,s=0.01)
+ax1.scatter(np.linspace(0,sw_end,len(nose_locs_mp_km)),nose_locs_bs_km,s=0.01)
 #ax1.scatter(nose_locs_mp_km, nose_locs_bs_km, s=0.001)
 
 # save plot
@@ -95,30 +98,25 @@ time_utc = sw_df['UTC']
 
 juno_time_sw,iono_time,tot_travel_time,time_shift,magnetosheath_t_time,ionosphere_t_time = ptsw.propagation_time(pressure_array,sw_speed_array,X_juno,Y_juno,time_utc[0:sw_end],nose_locs_mp_km[0:sw_end],nose_locs_bs_km[0:sw_end])
 
-# # travel time data
-# iono_time = travel_times['Time_Impacts_Ionosphere'].to_numpy()
-# tot_travel_time = travel_times['Total_Travel_Time'].to_numpy()
-# juno_time_sw = travel_times['Juno_SW_Detection_Time'].to_numpy()
-# time_shift = travel_times['Time_Shift_To_Bow_Shock'].to_numpy()
-# magnetosheath_t_time = travel_times['Magnetosheath_Travel_Time'].to_numpy()
-# ionosphere_t_time = travel_times['Magnetopause_To_Ionosphere_Time'].to_numpy()
-
 # get et times for ionotimes
 #iono_time_string = np.array_str(iono_time)
 iono_time_string = [str(item) for item in iono_time]
 iono_time_str = np.array(iono_time_string)
-
-
 
 ettimes = []
 # need to make this into for loop as can only convert one thing into date time at a time
 for p in range(len(iono_time_str)):
     times = spice.str2et(iono_time_str[p])
     ettimes.append(times)
+    
+# ----- mag data calculations ------
 
 # some calculations
 clock_angle, clock_angle_range = mdc.clock_angle_calculator(Bn, Bt,'no','no')
 B_perp = mdc.B_perp_calculator(Bn, Bt, 'no')
+
+
+# ------- reconnection voltages ------
 
 
 LL, HL_pos, HL_neg = rv.reconnection_voltages(clock_angle, B_perp, sw_speed_array, nose_locs_mp_km[0:sw_end],juno_time_sw)
@@ -160,23 +158,11 @@ juno_data_df = juno_data_df.assign(High_Latitude_Reconnection_Voltage_BY_POS=HL_
 juno_data_df = juno_data_df.assign(High_Latitude_Reconnection_Voltage_BY_NEG=HL_neg)
 
 
-'''extended version'''
-# # export dataframe to read into other files
-#juno_data_df.to_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_big_df_realtime_extended.csv',index=False)
-
-# # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
-#juno_data_df.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
-
-# # export SORTED dataframe to read into other files
-#juno_data_df.to_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_big_df_ionotime_exended.csv',index=False)
-
-
-
-# # export dataframe to read into other files
+# export dataframe to read into other files
 juno_data_df.to_csv(root_folder+'juno_data_big_df_realtime_updated.csv',index=False)
 
-# # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
+# rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 juno_data_df.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
-# # export SORTED dataframe to read into other files
+# export SORTED dataframe to read into other files
 juno_data_df.to_csv(root_folder+'juno_data_big_df_ionotime_updated.csv',index=False)
