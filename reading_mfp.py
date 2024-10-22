@@ -37,7 +37,7 @@ def moonfploc(iolon, eulon, galon):
                 sat_i = lista[pre][0]
                 sat_f = lista[pos][0]
                 
-                if n == 0: # io
+                if n == 0: # for io
                     nlonio = np.interp(i, [sat_i,sat_f],[lista[pre][1],lista[pos][1]])
                     nlatio = np.interp(i, [sat_i,sat_f],[lista[pre][2],lista[pos][2]])
                     slonio = np.interp(i, [sat_i,sat_f],[lista[pre][3],lista[pos][3]])
@@ -46,7 +46,7 @@ def moonfploc(iolon, eulon, galon):
                     ncolatio = 90.-abs(nlatio)
                     scolatio = 90.-abs(slatio)
                     
-                elif n == 1: # europa
+                elif n == 1: # for europa
                     nloneu = np.interp(i, [sat_i,sat_f],[lista[pre][5],lista[pos][5]])
                     nlateu = np.interp(i, [sat_i,sat_f],[lista[pre][6],lista[pos][6]])
                     sloneu = np.interp(i, [sat_i,sat_f],[lista[pre][7],lista[pos][7]])
@@ -62,7 +62,7 @@ def moonfploc(iolon, eulon, galon):
                     ncolateu = 90.-abs(nlateu)
                     scolateu = 90.-abs(slateu)
                             
-                elif n == 2: # ganymede
+                elif n == 2: # for ganymede
                     nlonga = np.interp(i, [sat_i,sat_f],[lista[pre][9],lista[pos][9]])
                     nlatga = np.interp(i, [sat_i,sat_f],[lista[pre][10],lista[pos][10]])
                     slonga = np.interp(i, [sat_i,sat_f],[lista[pre][11],lista[pos][11]])
