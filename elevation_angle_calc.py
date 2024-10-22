@@ -73,12 +73,6 @@ def elevAngles(radius_e, radius_p, visit):
     radius_e_p = np.array([radius_e, radius_e, radius_p])
 
     
-    '''
-    need to rewrite the grid so its 0.25 x 0.25 pixel size going from: 
-        lats -> 0, 0.25, 0.5, ..., 179.75
-        lons -> 0, 0.25, 0.5, ..., 359.75 
-    '''
-    
     # longitudes
     import numpy as np
     lons = np.linspace(0, 360, num=1441)
