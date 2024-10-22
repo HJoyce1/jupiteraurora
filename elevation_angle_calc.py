@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Wed Jan 31 11:13:17 2024
 
@@ -28,13 +30,13 @@ spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/de436s.bsp")
 spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/hst.bsp")
 
 # mac
-root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/'
+root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/'
 
 radius_e = 71942 + 240
 radius_p = 66854 + 240
 
 # dataframes
-visit_times = pd.read_csv(root_folder+'visit_times.csv')
+visit_times = pd.read_csv(root_folder+'dataframes/visit_times.csv')
 
 # grab all visit time data
 visit_04 = visit_times['Visit_04'].to_numpy()
@@ -114,8 +116,6 @@ def elevAngles(radius_e, radius_p, visit):
 
 
 visit = visit_05
-
 angles, times, vecs = elevAngles(radius_e, radius_p, visit)
 angles_deg = angles*180/np.pi
-
-np.savez(root_folder+f'elev_angles/elevation_angles_{visit}_test.npz',angles)
+np.savez(root_folder+'elev_angles/elevation_angles_visit_05_test.npz',angles)
