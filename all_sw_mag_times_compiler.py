@@ -160,23 +160,11 @@ juno_data_df = juno_data_df.assign(High_Latitude_Reconnection_Voltage_BY_POS=HL_
 juno_data_df = juno_data_df.assign(High_Latitude_Reconnection_Voltage_BY_NEG=HL_neg)
 
 
-'''extended version'''
-# # export dataframe to read into other files
-#juno_data_df.to_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_big_df_realtime_extended.csv',index=False)
-
-# # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
-#juno_data_df.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
-
-# # export SORTED dataframe to read into other files
-#juno_data_df.to_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_big_df_ionotime_exended.csv',index=False)
-
-
-
-# # export dataframe to read into other files
+# export dataframe to read into other files
 juno_data_df.to_csv(root_folder+'juno_data_big_df_realtime_updated.csv',index=False)
 
-# # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
+# rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 juno_data_df.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
-# # export SORTED dataframe to read into other files
+# export SORTED dataframe to read into other files
 juno_data_df.to_csv(root_folder+'juno_data_big_df_ionotime_updated.csv',index=False)
