@@ -20,14 +20,14 @@ spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/naif0012.tls"
 root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/'
 
 # dataframes
-visit_times = pd.read_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/visit_times.csv')
+visit_times = pd.read_csv(f'{root_folder}visit_times.csv')
 
-df = pd.read_csv(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_big_df_ionotime_new_errors_{error}.csv')
+df = pd.read_csv(f'{root_folder}juno_data_big_df_ionotime_new_errors_{error}.csv')
 
 
-df_155 = pd.read_csv(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_doy_155_ionotime_errors_{error}.csv')
-df_156_plus = pd.read_csv(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_doy_156_plus_ionotime_errors_{error}.csv')
-df_175 = pd.read_csv(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/juno_data_doy_175_ionotime_errors_{error}.csv')
+df_155 = pd.read_csv(f'{root_folder}juno_data_doy_155_ionotime_errors_{error}.csv')
+df_156_plus = pd.read_csv(f'{root_folder}juno_data_doy_156_plus_ionotime_errors_{error}.csv')
+df_175 = pd.read_csv(f'{root_folder}juno_data_doy_175_ionotime_errors_{error}.csv')
 
 
 # grab all visit time data
