@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Mon Oct  9 12:55:01 2023
 
@@ -77,58 +79,57 @@ plt.scatter(pos_175[:,0]/71492, pos_175[:,1]/71492,marker='.',s=marker_size)
 plt.show()
 
 
-# want to write the distances in x, y and z along with time into a dataframe
-juno_pos = pd.DataFrame()
-juno_pos = juno_pos.assign(UTC=UTC)
-juno_pos = juno_pos.assign(ET=et)
-juno_pos = juno_pos.assign(X=pos[:,0])
-juno_pos = juno_pos.assign(XRJ=(pos[:,0]/71492))
-juno_pos = juno_pos.assign(Y=pos[:,1])
-juno_pos = juno_pos.assign(YRJ=(pos[:,1]/71492))
-juno_pos = juno_pos.assign(Z=pos[:,2])
-juno_pos = juno_pos.assign(ZRJ=(pos[:,2]/71492))
+# # want to write the distances in x, y and z along with time into a dataframe
+# juno_pos = pd.DataFrame()
+# juno_pos = juno_pos.assign(UTC=UTC)
+# juno_pos = juno_pos.assign(ET=et)
+# juno_pos = juno_pos.assign(X=pos[:,0])
+# juno_pos = juno_pos.assign(XRJ=(pos[:,0]/71492))
+# juno_pos = juno_pos.assign(Y=pos[:,1])
+# juno_pos = juno_pos.assign(YRJ=(pos[:,1]/71492))
+# juno_pos = juno_pos.assign(Z=pos[:,2])
+# juno_pos = juno_pos.assign(ZRJ=(pos[:,2]/71492))
 
-juno_pos.to_csv(root_folder+'juno_position_df.csv',index=False)
-
-
-# want to write the distances in x, y and z along with time into a dataframe
-juno_pos_155 = pd.DataFrame()
-juno_pos_155 = juno_pos_155.assign(UTC=UTC_155)
-juno_pos_155 = juno_pos_155.assign(ET=et_155)
-juno_pos_155 = juno_pos_155.assign(X=pos_155[:,0])
-juno_pos_155 = juno_pos_155.assign(XRJ=(pos_155[:,0]/71492))
-juno_pos_155 = juno_pos_155.assign(Y=pos_155[:,1])
-juno_pos_155 = juno_pos_155.assign(YRJ=(pos_155[:,1]/71492))
-juno_pos_155 = juno_pos_155.assign(Z=pos_155[:,2])
-juno_pos_155 = juno_pos_155.assign(ZRJ=(pos_155[:,2]/71492))
-
-juno_pos_155.to_csv(root_folder+'juno_position_155_df.csv',index=False)
+# juno_pos.to_csv(root_folder+'juno_position_df.csv',index=False)
 
 
-# want to write the distances in x, y and z along with time into a dataframe
-juno_pos_156_plus = pd.DataFrame()
-juno_pos_156_plus = juno_pos_156_plus.assign(UTC=UTC_156_plus)
-juno_pos_156_plus = juno_pos_156_plus.assign(ET=et_156_plus)
-juno_pos_156_plus = juno_pos_156_plus.assign(X=pos_156_plus[:,0])
-juno_pos_156_plus = juno_pos_156_plus.assign(XRJ=(pos_156_plus[:,0]/71492))
-juno_pos_156_plus = juno_pos_156_plus.assign(Y=pos_156_plus[:,1])
-juno_pos_156_plus = juno_pos_156_plus.assign(YRJ=(pos_156_plus[:,1]/71492))
-juno_pos_156_plus = juno_pos_156_plus.assign(Z=pos_156_plus[:,2])
-juno_pos_156_plus = juno_pos_156_plus.assign(ZRJ=(pos_156_plus[:,2]/71492))
+# # want to write the distances in x, y and z along with time into a dataframe
+# juno_pos_155 = pd.DataFrame()
+# juno_pos_155 = juno_pos_155.assign(UTC=UTC_155)
+# juno_pos_155 = juno_pos_155.assign(ET=et_155)
+# juno_pos_155 = juno_pos_155.assign(X=pos_155[:,0])
+# juno_pos_155 = juno_pos_155.assign(XRJ=(pos_155[:,0]/71492))
+# juno_pos_155 = juno_pos_155.assign(Y=pos_155[:,1])
+# juno_pos_155 = juno_pos_155.assign(YRJ=(pos_155[:,1]/71492))
+# juno_pos_155 = juno_pos_155.assign(Z=pos_155[:,2])
+# juno_pos_155 = juno_pos_155.assign(ZRJ=(pos_155[:,2]/71492))
 
-juno_pos_156_plus.to_csv(root_folder+'juno_position_156_plus_df.csv',index=False)
+# juno_pos_155.to_csv(root_folder+'juno_position_155_df.csv',index=False)
 
 
-# want to write the distances in x, y and z along with time into a dataframe
-juno_pos_175 = pd.DataFrame()
-juno_pos_175 = juno_pos_175.assign(UTC=UTC_175)
-juno_pos_175 = juno_pos_175.assign(ET=et_175)
-juno_pos_175 = juno_pos_175.assign(X=pos_175[:,0])
-juno_pos_175 = juno_pos_175.assign(XRJ=(pos_175[:,0]/71492))
-juno_pos_175 = juno_pos_175.assign(Y=pos_175[:,1])
-juno_pos_175 = juno_pos_175.assign(YRJ=(pos_175[:,1]/71492))
-juno_pos_175 = juno_pos_175.assign(Z=pos_175[:,2])
-juno_pos_175 = juno_pos_175.assign(ZRJ=(pos_175[:,2]/71492))
+# # want to write the distances in x, y and z along with time into a dataframe
+# juno_pos_156_plus = pd.DataFrame()
+# juno_pos_156_plus = juno_pos_156_plus.assign(UTC=UTC_156_plus)
+# juno_pos_156_plus = juno_pos_156_plus.assign(ET=et_156_plus)
+# juno_pos_156_plus = juno_pos_156_plus.assign(X=pos_156_plus[:,0])
+# juno_pos_156_plus = juno_pos_156_plus.assign(XRJ=(pos_156_plus[:,0]/71492))
+# juno_pos_156_plus = juno_pos_156_plus.assign(Y=pos_156_plus[:,1])
+# juno_pos_156_plus = juno_pos_156_plus.assign(YRJ=(pos_156_plus[:,1]/71492))
+# juno_pos_156_plus = juno_pos_156_plus.assign(Z=pos_156_plus[:,2])
+# juno_pos_156_plus = juno_pos_156_plus.assign(ZRJ=(pos_156_plus[:,2]/71492))
 
-juno_pos_175.to_csv(root_folder+'juno_position_175_df.csv',index=False)
-juno_pos = juno_pos.assign(ZRJ=(pos[:,2]/71492))
+# juno_pos_156_plus.to_csv(root_folder+'juno_position_156_plus_df.csv',index=False)
+
+
+# # want to write the distances in x, y and z along with time into a dataframe
+# juno_pos_175 = pd.DataFrame()
+# juno_pos_175 = juno_pos_175.assign(UTC=UTC_175)
+# juno_pos_175 = juno_pos_175.assign(ET=et_175)
+# juno_pos_175 = juno_pos_175.assign(X=pos_175[:,0])
+# juno_pos_175 = juno_pos_175.assign(XRJ=(pos_175[:,0]/71492))
+# juno_pos_175 = juno_pos_175.assign(Y=pos_175[:,1])
+# juno_pos_175 = juno_pos_175.assign(YRJ=(pos_175[:,1]/71492))
+# juno_pos_175 = juno_pos_175.assign(Z=pos_175[:,2])
+# juno_pos_175 = juno_pos_175.assign(ZRJ=(pos_175[:,2]/71492))
+
+# juno_pos_175.to_csv(root_folder+'juno_position_175_df.csv',index=False)

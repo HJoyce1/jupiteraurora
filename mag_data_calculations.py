@@ -4,35 +4,32 @@
 Created on Thu Aug 10 10:22:41 2023
 
 @author: hannah
+
+this script calculates the clock angle and the perpendicular b field for solar wind variables
+these are two seperate modules that need to be called from another script
 """
 
 # code to calculate clock angle and perpendicular componenent of solar wind
 
 # file to process pds data
-def clock_angle_calculator(Bn,Bt,check,plotting):
+def clock_angle_calculator(Bz,By,check,plotting):
     # import relevant modules
     import numpy as np
     import matplotlib.pyplot as plt
 
     # empty grid for clock angle
     clock_angle = []
-    clock_angle_range = []
     # calculate clock angle for each moving avg
-    for j in range(len(Bn)):
+    for j in range(len(Bz)):
     # use arctan2 electric boogaloo
     # 0 is Bz+, +/-180 is Bz-, +90 is By+, -90 is By-
-        theta_c = np.arctan2(Bt[j],Bn[j])
+        theta_c = np.arctan2(By[j],Bz[j])
         theta_c_deg = np.degrees(theta_c)
         
-        c_angle_min = theta_c_deg - 10.25
-        c_angle_max = theta_c_deg + 10.25
+        # c_angle_min = theta_c_deg - 10.25
+        # c_angle_max = theta_c_deg + 10.25
         
-        '''
-        need to finish sorting this but implement it as an error bar?
-        '''
-        
-        c_angle_range = c_angle_max - c_angle_min
-        
+        #c_angle_range = c_angle_max - c_angle_min
         
         # can 'alter' to a 0 - 360 clock by +360 to -ve data points
         # ie 0 is +Bz, +90 is By+, 180 is -Bz and 270 is -By
@@ -40,9 +37,8 @@ def clock_angle_calculator(Bn,Bt,check,plotting):
         #     theta_c_deg += 360
         # save clock angle to array of clock angles
         clock_angle.append(theta_c_deg)
-        clock_angle_range.append(c_angle_range)
     
-    return clock_angle, clock_angle_range
+    return clock_angle
         
     
     # check clock angle values are within bounds   
@@ -57,13 +53,13 @@ def clock_angle_calculator(Bn,Bt,check,plotting):
         
     return clock_angle
 
-def B_perp_calculator(Bn,Bt,check):
+def B_perp_calculator(Bz,By,check):
     import numpy as np
     
     B_perp = []
     
-    for k in range(len(Bn)):
-        square = (Bt[k]**2) + (Bn[k]**2)
+    for k in range(len(Bz)):
+        square = (By[k]**2) + (Bz[k]**2)
         root = np.sqrt(square)
         B_perp.append(root)
         
