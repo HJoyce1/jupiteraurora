@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Tue Oct  3 11:02:06 2023
 
 @author: hannah
+
+recreation of the joy model in python
 """
 # this code is designed to determine the magnetopause location  and local time
 # using the joy model (joy et al 2002)
@@ -9,6 +13,22 @@ Created on Tue Oct  3 11:02:06 2023
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+
+'''
+need to write a bit of code to extract pressure from data ie:
+    
+# read in solar wind paramters file
+df = pd.read_csv('/Users/hannah/OneDrive - Lancaster University/aurora/solar_wind_data.csv',delimiter=',')
+
+# need to convert columns to arrays to work with averages
+ram_pressure_array = df[['RAM_PRESSURE_PROTONS_NPA']].to_numpy() # pressure 
+
+ram_pressure_array[15000] # <-- need a way to get this location?
+
+don't need this anymore provided function carries over bs_loc and mp_loc
+'''
+
+pressure = 0.079
 
 # magnetopause location
 def magnetopause_location(pressure,plotting):
@@ -67,7 +87,7 @@ def magnetopause_location(pressure,plotting):
     # gives location of magnetpopause in RJ
     mp_loc = x[min_minus_y]
     # print(mp_loc)
-    return mp_loc#, x, y
+    return mp_loc, x, y
 
 
 def multi_nose(pressure):
@@ -147,20 +167,26 @@ def bow_shock_location(pressure,plotting):
     bs_loc = x[min_minus_y]
     #print(bs_loc)
     #breakpoint()
-    return bs_loc#, x, y
+    return bs_loc, x, y
 
 
-# # to run function if ehecking from this file
-# pressure = 0.6
-# mp_loc, x1, y1 = magnetopause_location(pressure,'yes')
-# bs_loc, x2, y2 = bow_shock_location(pressure,'yes')
+# to run function if ehecking from this file
+mp_loc, x1, y1 = magnetopause_location(pressure,'yes')
+bs_loc, x2, y2 = bow_shock_location(pressure,'yes')
 
-# print(mp_loc)
-# print(bs_loc)
+print(mp_loc)
+print(bs_loc)
 
-# fig = plt.figure()
-# ax1 = fig.add_subplot(1,1,1)
-# ax1.plot(x1, y1)
-# ax1.plot(x2, y2)
-# ax1.tick_params(which='both',direction='in',bottom=True, top=True, left=True, right=True)
-# ax1.set_xlim(0,60)
+fig = plt.figure(figsize=(12, 8))
+ax1 = fig.add_subplot(1,1,1)
+ax1.plot(x1, y1, label='Magnetopause Boundary')
+ax1.plot(x2, y2, label='Bow Shock Boundary')
+ax1.set_ylabel('Y ($R_J$)', fontsize=16)
+ax1.set_xlabel('X ($R_J$)',fontsize=16)
+ax1.tick_params(which='both',direction='in',bottom=True, top=True, left=True, right=True, labelsize=16)
+ax1.plot(5.7, -125, 'ro', label='Juno Location')  # red circle marker
+ax1.set_xlim(0,170)
+ax1.legend(fontsize=16)
+
+saveloc = ('/Users/hannah/OneDrive - Lancaster University/aurora/beforeentry_juno_location.jpg')
+plt.savefig(saveloc,bbox_inches='tight',dpi=400)
