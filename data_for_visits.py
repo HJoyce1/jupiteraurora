@@ -22,11 +22,11 @@ root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/python_scrip
 
 # dataframes
 visit_times = pd.read_csv(root_folder+'visit_times.csv')
-pre_155_sw = pd.read_csv(root_folder+'juno_data_big_df_ionotime_updated.csv')
+pre_155_sw = pd.read_csv(root_folder+'juno_data_big_df_ionotime_aug.csv')
 
-sw_155 = pd.read_csv(root_folder+'juno_data_doy_155_ionotime.csv')
-sw_156_plus = pd.read_csv(root_folder+'juno_data_doy_156_plus_ionotime.csv')
-sw_175 = pd.read_csv(root_folder+'juno_data_doy_175_ionotime.csv')
+sw_155 = pd.read_csv(root_folder+'juno_data_doy_155_ionotime_aug.csv')
+sw_156_plus = pd.read_csv(root_folder+'juno_data_doy_156_plus_ionotime_aug.csv')
+sw_175 = pd.read_csv(root_folder+'juno_data_doy_175_ionotime_aug.csv')
 
 
 # grab all visit tiem data
@@ -338,7 +338,7 @@ df_10 = df_10.assign(Big_DF_Index=idx_10)
 df_10 = df_10.assign(Ionosphere_Time=iono_time_10)
 df_10 = df_10.assign(SW_Travel_Time=travel_time_10)
 
-df_10.to_csv(root_folder+'isit_10_times.csv',index=False)
+df_10.to_csv(root_folder+'visit_10_times.csv',index=False)
 
 
 
