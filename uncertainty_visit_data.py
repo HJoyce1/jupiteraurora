@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Tue Sep  3 14:53:02 2024
 
@@ -12,7 +14,7 @@ import spiceypy as spice
 import numpy as np
 
 
-error='50'
+error='20'
 
 # leap seconds kernal - need this for ephemerous time
 spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/naif0012.tls")
@@ -22,12 +24,12 @@ root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/python_scrip
 # dataframes
 visit_times = pd.read_csv(f'{root_folder}visit_times.csv')
 
-df = pd.read_csv(f'{root_folder}juno_data_big_df_ionotime_new_errors_{error}.csv')
+df = pd.read_csv(f'{root_folder}juno_data_big_df_ionotime_new_errors_{error}_aug.csv')
 
 
-df_155 = pd.read_csv(f'{root_folder}juno_data_doy_155_ionotime_errors_{error}.csv')
-df_156_plus = pd.read_csv(f'{root_folder}juno_data_doy_156_plus_ionotime_errors_{error}.csv')
-df_175 = pd.read_csv(f'{root_folder}juno_data_doy_175_ionotime_errors_{error}.csv')
+df_155 = pd.read_csv(f'{root_folder}juno_data_doy_155_ionotime_errors_{error}_aug.csv')
+df_156_plus = pd.read_csv(f'{root_folder}juno_data_doy_156_plus_ionotime_errors_{error}_aug.csv')
+df_175 = pd.read_csv(f'{root_folder}juno_data_doy_175_ionotime_errors_{error}_aug.csv')
 
 
 # grab all visit time data
@@ -65,17 +67,20 @@ visit_35 = visit_times['Visit_35'].to_numpy()
 pressure_array = df['SW_Pressure'].to_numpy()
 velocity_array = df['SW_Velocity'].to_numpy()
 clock_angle = df['Clock_Angle'].to_numpy()
-clock_angle_err = df['Clock_Angle_Error'].to_numpy()
 b_perp = df['B_Perp'].to_numpy()
-Br = df['Br'].to_numpy()
-Bt = df['Bt'].to_numpy()
-Bn = df['Bn'].to_numpy()
+Bx = df['Bx'].to_numpy()
+By = df['By'].to_numpy()
+Bz = df['Bz'].to_numpy()
 juno_time = df['Juno_Detection_Time'].to_numpy()
 bs_loc = df['Bow_Shock_Stand_Off_RJ'].to_numpy()
 mp_loc = df['Magnetopause_Stand_Off_RJ'].to_numpy()
 LL_rec = df['Low_Latitude_Reconnection_Voltage'].to_numpy()
 HL_rec_neg = df['High_Latitude_Reconnection_Voltage_BY_NEG'].to_numpy()
 HL_rec_pos = df['High_Latitude_Reconnection_Voltage_BY_POS'].to_numpy()
+gersh = df['Gershman_Reconnection_Power'].to_numpy()
+KH = df['Kelvin_Helmholtz_Power'].to_numpy()
+KH_dawn = df['Kelvin_Helmholtz_Power_Dawn'].to_numpy()
+KH_dusk = df['Kelvin_Helmholtz_Power_Dusk'].to_numpy()
 
 
 # ------------
@@ -102,15 +107,19 @@ pressure_array_155 = df_155['Pressure'].to_numpy()
 velocity_array_155 = df_155['Velocity'].to_numpy()
 clock_angle_155 = df_155['Clock_Angle'].to_numpy()
 b_perp_155 = df_155['B_perp'].to_numpy()
-Br_155 = df_155['Br'].to_numpy()
-Bt_155 = df_155['Bt'].to_numpy()
-Bn_155 = df_155['Bn'].to_numpy()
+Bx_155 = df_155['Bx'].to_numpy()
+By_155 = df_155['By'].to_numpy()
+Bz_155 = df_155['Bz'].to_numpy()
 juno_time_155 = df_155['UTC'].to_numpy()
 bs_loc_155 = df_155['Bow_Shock_Location'].to_numpy()
 mp_loc_155 = df_155['Magnetopause_Location'].to_numpy()
 LL_rec_155 = df_155['Low_Latitude_Reconnection'].to_numpy()
 HL_rec_neg_155 = df_155['High_Latitude_Reconnection_By_Neg'].to_numpy()
 HL_rec_pos_155 = df_155['High_Latitude_Reconnection_By_Pos'].to_numpy()
+gersh_155 = df_155['Gershman_Reconnection_Power'].to_numpy()
+KH_155 = df_155['Kelvin_Helmholtz_Power'].to_numpy()
+KH_dawn_155 = df_155['Kelvin_Helmholtz_Power_Dawn'].to_numpy()
+KH_dusk_155 = df_155['Kelvin_Helmholtz_Power_Dusk'].to_numpy()
 
 
 # ------------
@@ -138,15 +147,19 @@ pressure_array_156_plus = df_156_plus['Pressure'].to_numpy()
 velocity_array_156_plus = df_156_plus['Velocity'].to_numpy()
 clock_angle_156_plus = df_156_plus['Clock_Angle'].to_numpy()
 b_perp_156_plus = df_156_plus['B_perp'].to_numpy()
-Br_156_plus = df_156_plus['Br'].to_numpy()
-Bt_156_plus = df_156_plus['Bt'].to_numpy()
-Bn_156_plus = df_156_plus['Bn'].to_numpy()
+Bx_156_plus = df_156_plus['Bx'].to_numpy()
+By_156_plus = df_156_plus['By'].to_numpy()
+Bz_156_plus = df_156_plus['Bz'].to_numpy()
 juno_time_156_plus = df_156_plus['UTC'].to_numpy()
 bs_loc_156_plus = df_156_plus['Bow_Shock_Location'].to_numpy()
 mp_loc_156_plus = df_156_plus['Magnetopause_Location'].to_numpy()
 LL_rec_156_plus = df_156_plus['Low_Latitude_Reconnection'].to_numpy()
 HL_rec_neg_156_plus = df_156_plus['High_Latitude_Reconnection_By_Neg'].to_numpy()
 HL_rec_pos_156_plus = df_156_plus['High_Latitude_Reconnection_By_Pos'].to_numpy()
+gersh_156_plus = df_156_plus['Gershman_Reconnection_Power'].to_numpy()
+KH_156_plus = df_156_plus['Kelvin_Helmholtz_Power'].to_numpy()
+KH_dawn_156_plus = df_156_plus['Kelvin_Helmholtz_Power_Dawn'].to_numpy()
+KH_dusk_156_plus = df_155['Kelvin_Helmholtz_Power'].to_numpy()
 
 
 # ------------
@@ -174,15 +187,19 @@ pressure_array_175 = df_175['Pressure'].to_numpy()
 velocity_array_175 = df_175['Velocity'].to_numpy()
 clock_angle_175 = df_175['Clock_Angle'].to_numpy()
 b_perp_175 = df_175['B_perp'].to_numpy()
-Br_175 = df_175['Br'].to_numpy()
-Bt_175 = df_175['Bt'].to_numpy()
-Bn_175 = df_175['Bn'].to_numpy()
+Bx_175 = df_175['Bx'].to_numpy()
+By_175 = df_175['By'].to_numpy()
+Bz_175 = df_175['Bz'].to_numpy()
 juno_time_175 = df_175['UTC'].to_numpy()
 bs_loc_175 = df_175['Bow_Shock_Location'].to_numpy()
 mp_loc_175 = df_175['Magnetopause_Location'].to_numpy()
 LL_rec_175 = df_175['Low_Latitude_Reconnection'].to_numpy()
 HL_rec_neg_175 = df_175['High_Latitude_Reconnection_By_Neg'].to_numpy()
 HL_rec_pos_175 = df_175['High_Latitude_Reconnection_By_Pos'].to_numpy()
+gersh_175 = df_175['Gershman_Reconnection_Power'].to_numpy()
+KH_175 = df_175['Kelvin_Helmholtz_Power'].to_numpy()
+KH_dawn_175 = df_175['Kelvin_Helmholtz_Power_Dawn'].to_numpy()
+KH_dusk_175 = df_175['Kelvin_Helmholtz_Power_Dusk'].to_numpy()
 
 
 # ------------
@@ -244,11 +261,18 @@ times_minus_01, idx_minus_01 = between_idxs(minus_error_et,first_01,last_01)
 iono_time_plus_01 = plus_error[idx_plus_01]
 pressure_plus_01 = pressure_array[idx_plus_01]
 clock_plus_01 = clock_angle[idx_plus_01]
-clock_err_plus_01 = clock_angle_err[idx_plus_01]
 LL_plus_01 = LL_rec[idx_plus_01]
 HL_plus_01_pos = HL_rec_pos[idx_plus_01] 
 HL_plus_01_neg = HL_rec_neg[idx_plus_01]
+gersh_plus_01 = gersh[idx_plus_01]
+KH_plus_01 = KH[idx_plus_01]
+KH_dawn_plus_01 = KH_dawn[idx_plus_01]
+KH_dusk_plus_01 = KH_dusk[idx_plus_01]
 b_perp_plus_01 = b_perp[idx_plus_01]
+
+bx_plus_01 = Bx[idx_plus_01]
+by_plus_01 = By[idx_plus_01]
+bz_plus_01 = Bz[idx_plus_01]
 
 
 
@@ -257,11 +281,18 @@ b_perp_plus_01 = b_perp[idx_plus_01]
 iono_time_minus_01 = minus_error[idx_minus_01]
 pressure_minus_01 = pressure_array[idx_minus_01]
 clock_minus_01 = clock_angle[idx_minus_01]
-clock_err_minus_01 = clock_angle_err[idx_minus_01]
 LL_minus_01 = LL_rec[idx_minus_01]
 HL_minus_01_pos = HL_rec_pos[idx_minus_01]
 HL_minus_01_neg = HL_rec_neg[idx_minus_01]
+gersh_minus_01 = gersh[idx_minus_01]
+KH_minus_01 = KH[idx_minus_01]
+KH_dawn_minus_01 = KH_dawn[idx_minus_01]
+KH_dusk_minus_01 = KH_dusk[idx_minus_01]
 b_perp_minus_01 = b_perp[idx_minus_01]
+
+bx_minus_01 = Bx[idx_minus_01]
+by_minus_01 = By[idx_minus_01]
+bz_minus_01 = Bz[idx_minus_01]
 
 
 # -------- dataframe -----------
@@ -274,24 +305,36 @@ df_01_p = df_01_p.assign(PLUS_Big_DF_Index=idx_plus_01)
 df_01_p = df_01_p.assign(PLUS_Ionosphere_Time=iono_time_plus_01)
 df_01_p = df_01_p.assign(PLUS_Pressure=pressure_plus_01)
 df_01_p = df_01_p.assign(PLUS_Clock_Angle=clock_plus_01)
-df_01_p = df_01_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_01)
 df_01_p = df_01_p.assign(PLUS_LL_rec_V=LL_plus_01)
 df_01_p = df_01_p.assign(PLUS_HL_rec_V_pos=HL_plus_01_pos)
 df_01_p = df_01_p.assign(PLUS_HL_rec_V_neg=HL_plus_01_neg)
+df_01_p = df_01_p.assign(PLUS_Gershman_rec=gersh_plus_01)
+df_01_p = df_01_p.assign(PLUS_KH=KH_plus_01)
+df_01_p = df_01_p.assign(PLUS_KH_dawn=KH_dawn_plus_01)
+df_01_p = df_01_p.assign(PLUS_KH_dusk=KH_dusk_plus_01)
 df_01_p = df_01_p.assign(PLUS_B_Perp=b_perp_plus_01)
-df_01_p.to_csv(f'{root_folder}visit_01_times_plus_error_{error}_new.csv',index=False)
+df_01_p = df_01_p.assign(PLUS_Bx=bx_plus_01)
+df_01_p = df_01_p.assign(PLUS_By=by_plus_01)
+df_01_p = df_01_p.assign(PLUS_Bz=bz_plus_01)
+df_01_p.to_csv(f'{root_folder}visit_01_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_01_m = df_01_m.assign(MINUS_Big_DF_Index=idx_minus_01)
 df_01_m = df_01_m.assign(MINUS_Ionosphere_Time=iono_time_minus_01)
 df_01_m = df_01_m.assign(MINUS_Pressure=pressure_minus_01)
 df_01_m = df_01_m.assign(MINUS_Clock_Angle=clock_minus_01)
-df_01_m = df_01_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_01)
 df_01_m = df_01_m.assign(MINUS_LL_rec_V=LL_minus_01)
 df_01_m = df_01_m.assign(MINUS_HL_rec_V_pos=HL_minus_01_pos)
 df_01_m = df_01_m.assign(MINUS_HL_rec_V_neg=HL_minus_01_neg)
+df_01_m = df_01_m.assign(MINUS_Gershman_rec=gersh_minus_01)
+df_01_m = df_01_m.assign(MINUS_KH=KH_minus_01)
+df_01_m = df_01_m.assign(MINUS_KH_dawn=KH_dawn_minus_01)
+df_01_m = df_01_m.assign(MINUS_KH_dusk=KH_dusk_minus_01)
 df_01_m = df_01_m.assign(MINUS_B_Perp=b_perp_minus_01)
-df_01_m.to_csv(f'{root_folder}visit_01_times_minus_error_{error}_new.csv',index=False)
+df_01_m = df_01_m.assign(MINUS_Bx=bx_minus_01)
+df_01_m = df_01_m.assign(MINUS_By=by_minus_01)
+df_01_m = df_01_m.assign(MINUS_Bz=bz_minus_01)
+df_01_m.to_csv(f'{root_folder}visit_01_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -317,11 +360,18 @@ times_minus_02, idx_minus_02 = between_idxs(minus_error_et,first_02,last_02)
 iono_time_plus_02 = plus_error[idx_plus_02]
 pressure_plus_02 = pressure_array[idx_plus_02]
 clock_plus_02 = clock_angle[idx_plus_02]
-clock_err_plus_02 = clock_angle_err[idx_plus_02]
 LL_plus_02 = LL_rec[idx_plus_02]
 HL_plus_02_pos = HL_rec_pos[idx_plus_02] 
 HL_plus_02_neg = HL_rec_neg[idx_plus_02]
+gersh_plus_02 = gersh[idx_plus_02]
+KH_plus_02 = KH[idx_plus_02]
+KH_dawn_plus_02 = KH_dawn[idx_plus_02]
+KH_dusk_plus_02 = KH_dusk[idx_plus_02]
 b_perp_plus_02 = b_perp[idx_plus_02]
+
+bx_plus_02 = Bx[idx_plus_02]
+by_plus_02 = By[idx_plus_02]
+bz_plus_02 = Bz[idx_plus_02]
 
 
 
@@ -330,11 +380,18 @@ b_perp_plus_02 = b_perp[idx_plus_02]
 iono_time_minus_02 = minus_error[idx_minus_02]
 pressure_minus_02 = pressure_array[idx_minus_02]
 clock_minus_02 = clock_angle[idx_minus_02]
-clock_err_minus_02 = clock_angle_err[idx_minus_02]
 LL_minus_02 = LL_rec[idx_minus_02]
 HL_minus_02_pos = HL_rec_pos[idx_minus_02]
 HL_minus_02_neg = HL_rec_neg[idx_minus_02]
+gersh_minus_02 = gersh[idx_minus_02]
+KH_minus_02 = KH[idx_minus_02]
+KH_dawn_minus_02 = KH_dawn[idx_minus_02]
+KH_dusk_minus_02 = KH_dusk[idx_minus_02]
 b_perp_minus_02 = b_perp[idx_minus_02]
+
+bx_minus_02 = Bx[idx_minus_02]
+by_minus_02 = By[idx_minus_02]
+bz_minus_02 = Bz[idx_minus_02]
 
 
 # -------- dataframe -----------
@@ -347,24 +404,36 @@ df_02_p = df_02_p.assign(PLUS_Big_DF_Index=idx_plus_02)
 df_02_p = df_02_p.assign(PLUS_Ionosphere_Time=iono_time_plus_02)
 df_02_p = df_02_p.assign(PLUS_Pressure=pressure_plus_02)
 df_02_p = df_02_p.assign(PLUS_Clock_Angle=clock_plus_02)
-df_02_p = df_02_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_02)
 df_02_p = df_02_p.assign(PLUS_LL_rec_V=LL_plus_02)
 df_02_p = df_02_p.assign(PLUS_HL_rec_V_pos=HL_plus_02_pos)
 df_02_p = df_02_p.assign(PLUS_HL_rec_V_neg=HL_plus_02_neg)
+df_02_p = df_02_p.assign(PLUS_Gershman_rec=gersh_plus_02)
+df_02_p = df_02_p.assign(PLUS_KH=KH_plus_02)
+df_02_p = df_02_p.assign(PLUS_KH_dawn=KH_dawn_plus_02)
+df_02_p = df_02_p.assign(PLUS_KH_dusk=KH_dusk_plus_02)
 df_02_p = df_02_p.assign(PLUS_B_Perp=b_perp_plus_02)
-df_02_p.to_csv(f'{root_folder}visit_02_times_plus_error_{error}_new.csv',index=False)
+df_02_p = df_02_p.assign(PLUS_Bx=bx_plus_02)
+df_02_p = df_02_p.assign(PLUS_By=by_plus_02)
+df_02_p = df_02_p.assign(PLUS_Bz=bz_plus_02)
+df_02_p.to_csv(f'{root_folder}visit_02_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_02_m = df_02_m.assign(MINUS_Big_DF_Index=idx_minus_02)
 df_02_m = df_02_m.assign(MINUS_Ionosphere_Time=iono_time_minus_02)
 df_02_m = df_02_m.assign(MINUS_Pressure=pressure_minus_02)
 df_02_m = df_02_m.assign(MINUS_Clock_Angle=clock_minus_02)
-df_02_m = df_02_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_02)
 df_02_m = df_02_m.assign(MINUS_LL_rec_V=LL_minus_02)
 df_02_m = df_02_m.assign(MINUS_HL_rec_V_pos=HL_minus_02_pos)
 df_02_m = df_02_m.assign(MINUS_HL_rec_V_neg=HL_minus_02_neg)
+df_02_m = df_02_m.assign(MINUS_Gershman_rec=gersh_minus_02)
+df_02_m = df_02_m.assign(MINUS_KH=KH_minus_02)
+df_02_m = df_02_m.assign(MINUS_KH_dawn=KH_dawn_minus_02)
+df_02_m = df_02_m.assign(MINUS_KH_dusk=KH_dusk_minus_02)
 df_02_m = df_02_m.assign(MINUS_B_Perp=b_perp_minus_02)
-df_02_m.to_csv(f'{root_folder}visit_02_times_minus_error_{error}_new.csv',index=False)
+df_02_m = df_02_m.assign(MINUS_Bx=bx_minus_02)
+df_02_m = df_02_m.assign(MINUS_By=by_minus_02)
+df_02_m = df_02_m.assign(MINUS_Bz=bz_minus_02)
+df_02_m.to_csv(f'{root_folder}visit_02_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -390,12 +459,18 @@ times_minus_03, idx_minus_03 = between_idxs(minus_error_et,first_03,last_03)
 iono_time_plus_03 = plus_error[idx_plus_03]
 pressure_plus_03 = pressure_array[idx_plus_03]
 clock_plus_03 = clock_angle[idx_plus_03]
-clock_err_plus_03 = clock_angle_err[idx_plus_03]
 LL_plus_03 = LL_rec[idx_plus_03]
 HL_plus_03_pos = HL_rec_pos[idx_plus_03] 
 HL_plus_03_neg = HL_rec_neg[idx_plus_03]
+gersh_plus_03 = gersh[idx_plus_03]
+KH_plus_03 = KH[idx_plus_03]
+KH_dawn_plus_03 = KH_dawn[idx_plus_03]
+KH_dusk_plus_03 = KH_dusk[idx_plus_03]
 b_perp_plus_03 = b_perp[idx_plus_03]
 
+bx_plus_03 = Bx[idx_plus_03]
+by_plus_03 = By[idx_plus_03]
+bz_plus_03 = Bz[idx_plus_03]
 
 
 # --------- - % error ------------
@@ -403,11 +478,18 @@ b_perp_plus_03 = b_perp[idx_plus_03]
 iono_time_minus_03 = minus_error[idx_minus_03]
 pressure_minus_03 = pressure_array[idx_minus_03]
 clock_minus_03 = clock_angle[idx_minus_03]
-clock_err_minus_03 = clock_angle_err[idx_minus_03]
 LL_minus_03 = LL_rec[idx_minus_03]
 HL_minus_03_pos = HL_rec_pos[idx_minus_03]
 HL_minus_03_neg = HL_rec_neg[idx_minus_03]
+gersh_minus_03 = gersh[idx_minus_03]
+KH_minus_03 = KH[idx_minus_03]
+KH_dawn_minus_03 = KH_dawn[idx_minus_03]
+KH_dusk_minus_03 = KH_dusk[idx_minus_03]
 b_perp_minus_03 = b_perp[idx_minus_03]
+
+bx_minus_03 = Bx[idx_minus_03]
+by_minus_03 = By[idx_minus_03]
+bz_minus_03 = Bz[idx_minus_03]
 
 
 # -------- dataframe -----------
@@ -420,24 +502,36 @@ df_03_p = df_03_p.assign(PLUS_Big_DF_Index=idx_plus_03)
 df_03_p = df_03_p.assign(PLUS_Ionosphere_Time=iono_time_plus_03)
 df_03_p = df_03_p.assign(PLUS_Pressure=pressure_plus_03)
 df_03_p = df_03_p.assign(PLUS_Clock_Angle=clock_plus_03)
-df_03_p = df_03_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_03)
 df_03_p = df_03_p.assign(PLUS_LL_rec_V=LL_plus_03)
 df_03_p = df_03_p.assign(PLUS_HL_rec_V_pos=HL_plus_03_pos)
 df_03_p = df_03_p.assign(PLUS_HL_rec_V_neg=HL_plus_03_neg)
+df_03_p = df_03_p.assign(PLUS_Gershman_rec=gersh_plus_03)
+df_03_p = df_03_p.assign(PLUS_KH=KH_plus_03)
+df_03_p = df_03_p.assign(PLUS_KH_dawn=KH_dawn_plus_03)
+df_03_p = df_03_p.assign(PLUS_KH_dusk=KH_dusk_plus_03)
 df_03_p = df_03_p.assign(PLUS_B_Perp=b_perp_plus_03)
-df_03_p.to_csv(f'{root_folder}visit_03_times_plus_error_{error}_new.csv',index=False)
+df_03_p = df_03_p.assign(PLUS_Bx=bx_plus_03)
+df_03_p = df_03_p.assign(PLUS_By=by_plus_03)
+df_03_p = df_03_p.assign(PLUS_Bz=bz_plus_03)
+df_03_p.to_csv(f'{root_folder}visit_03_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_03_m = df_03_m.assign(MINUS_Big_DF_Index=idx_minus_03)
 df_03_m = df_03_m.assign(MINUS_Ionosphere_Time=iono_time_minus_03)
 df_03_m = df_03_m.assign(MINUS_Pressure=pressure_minus_03)
 df_03_m = df_03_m.assign(MINUS_Clock_Angle=clock_minus_03)
-df_03_m = df_03_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_03)
 df_03_m = df_03_m.assign(MINUS_LL_rec_V=LL_minus_03)
 df_03_m = df_03_m.assign(MINUS_HL_rec_V_pos=HL_minus_03_pos)
 df_03_m = df_03_m.assign(MINUS_HL_rec_V_neg=HL_minus_03_neg)
+df_03_m = df_03_m.assign(MINUS_Gershman_rec=gersh_minus_03)
+df_03_m = df_03_m.assign(MINUS_KH=KH_minus_03)
+df_03_m = df_03_m.assign(MINUS_KH_dawn=KH_dawn_minus_03)
+df_03_m = df_03_m.assign(MINUS_KH_dusk=KH_dusk_minus_03)
 df_03_m = df_03_m.assign(MINUS_B_Perp=b_perp_minus_03)
-df_03_m.to_csv(f'{root_folder}visit_03_times_minus_error_{error}_new.csv',index=False)
+df_03_m = df_03_m.assign(MINUS_Bx=bx_minus_03)
+df_03_m = df_03_m.assign(MINUS_By=by_minus_03)
+df_03_m = df_03_m.assign(MINUS_Bz=bz_minus_03)
+df_03_m.to_csv(f'{root_folder}visit_03_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -464,12 +558,18 @@ times_minus_04, idx_minus_04 = between_idxs(minus_error_et,first_04,last_04)
 iono_time_plus_04 = plus_error[idx_plus_04]
 pressure_plus_04 = pressure_array[idx_plus_04]
 clock_plus_04 = clock_angle[idx_plus_04]
-clock_err_plus_04 = clock_angle_err[idx_plus_04]
 LL_plus_04 = LL_rec[idx_plus_04]
 HL_plus_04_pos = HL_rec_pos[idx_plus_04] 
 HL_plus_04_neg = HL_rec_neg[idx_plus_04]
+gersh_plus_04 = gersh[idx_plus_04]
+KH_plus_04 = KH[idx_plus_04]
+KH_dawn_plus_04 = KH_dawn[idx_plus_04]
+KH_dusk_plus_04 = KH_dusk[idx_plus_04]
 b_perp_plus_04 = b_perp[idx_plus_04]
 
+bx_plus_04 = Bx[idx_plus_04]
+by_plus_04 = By[idx_plus_04]
+bz_plus_04 = Bz[idx_plus_04]
 
 
 # --------- - % error ------------
@@ -477,11 +577,18 @@ b_perp_plus_04 = b_perp[idx_plus_04]
 iono_time_minus_04 = minus_error[idx_minus_04]
 pressure_minus_04 = pressure_array[idx_minus_04]
 clock_minus_04 = clock_angle[idx_minus_04]
-clock_err_minus_04 = clock_angle_err[idx_minus_04]
 LL_minus_04 = LL_rec[idx_minus_04]
 HL_minus_04_pos = HL_rec_pos[idx_minus_04]
 HL_minus_04_neg = HL_rec_neg[idx_minus_04]
+gersh_minus_04 = gersh[idx_minus_04]
+KH_minus_04 = KH[idx_minus_04]
+KH_dawn_minus_04 = KH_dawn[idx_minus_04]
+KH_dusk_minus_04 = KH_dusk[idx_minus_04]
 b_perp_minus_04 = b_perp[idx_minus_04]
+
+bx_minus_04 = Bx[idx_minus_04]
+by_minus_04 = By[idx_minus_04]
+bz_minus_04 = Bz[idx_minus_04]
 
 
 # -------- dataframe -----------
@@ -494,24 +601,36 @@ df_04_p = df_04_p.assign(PLUS_Big_DF_Index=idx_plus_04)
 df_04_p = df_04_p.assign(PLUS_Ionosphere_Time=iono_time_plus_04)
 df_04_p = df_04_p.assign(PLUS_Pressure=pressure_plus_04)
 df_04_p = df_04_p.assign(PLUS_Clock_Angle=clock_plus_04)
-df_04_p = df_04_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_04)
 df_04_p = df_04_p.assign(PLUS_LL_rec_V=LL_plus_04)
 df_04_p = df_04_p.assign(PLUS_HL_rec_V_pos=HL_plus_04_pos)
 df_04_p = df_04_p.assign(PLUS_HL_rec_V_neg=HL_plus_04_neg)
+df_04_p = df_04_p.assign(PLUS_Gershman_rec=gersh_plus_04)
+df_04_p = df_04_p.assign(PLUS_KH=KH_plus_04)
+df_04_p = df_04_p.assign(PLUS_KH_dawn=KH_dawn_plus_04)
+df_04_p = df_04_p.assign(PLUS_KH_dusk=KH_dusk_plus_04)
 df_04_p = df_04_p.assign(PLUS_B_Perp=b_perp_plus_04)
-df_04_p.to_csv(f'{root_folder}visit_04_times_plus_error_{error}_new.csv',index=False)
+df_04_p = df_04_p.assign(PLUS_Bx=bx_plus_04)
+df_04_p = df_04_p.assign(PLUS_By=by_plus_04)
+df_04_p = df_04_p.assign(PLUS_Bz=bz_plus_04)
+df_04_p.to_csv(f'{root_folder}visit_04_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_04_m = df_04_m.assign(MINUS_Big_DF_Index=idx_minus_04)
 df_04_m = df_04_m.assign(MINUS_Ionosphere_Time=iono_time_minus_04)
 df_04_m = df_04_m.assign(MINUS_Pressure=pressure_minus_04)
 df_04_m = df_04_m.assign(MINUS_Clock_Angle=clock_minus_04)
-df_04_m = df_04_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_04)
 df_04_m = df_04_m.assign(MINUS_LL_rec_V=LL_minus_04)
 df_04_m = df_04_m.assign(MINUS_HL_rec_V_pos=HL_minus_04_pos)
 df_04_m = df_04_m.assign(MINUS_HL_rec_V_neg=HL_minus_04_neg)
+df_04_m = df_04_m.assign(MINUS_Gershman_rec=gersh_minus_04)
+df_04_m = df_04_m.assign(MINUS_KH=KH_minus_04)
+df_04_m = df_04_m.assign(MINUS_KH_dawn=KH_dawn_minus_04)
+df_04_m = df_04_m.assign(MINUS_KH_dusk=KH_dusk_minus_04)
 df_04_m = df_04_m.assign(MINUS_B_Perp=b_perp_minus_04)
-df_04_m.to_csv(f'{root_folder}visit_04_times_minus_error_{error}_new.csv',index=False)
+df_04_m = df_04_m.assign(MINUS_Bx=bx_minus_04)
+df_04_m = df_04_m.assign(MINUS_By=by_minus_04)
+df_04_m = df_04_m.assign(MINUS_Bz=bz_minus_04)
+df_04_m.to_csv(f'{root_folder}visit_04_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -538,11 +657,18 @@ times_minus_05, idx_minus_05 = between_idxs(minus_error_et,first_05,last_05)
 iono_time_plus_05 = plus_error[idx_plus_05]
 pressure_plus_05 = pressure_array[idx_plus_05]
 clock_plus_05 = clock_angle[idx_plus_05]
-clock_err_plus_05 = clock_angle_err[idx_plus_05]
 LL_plus_05 = LL_rec[idx_plus_05]
 HL_plus_05_pos = HL_rec_pos[idx_plus_05] 
 HL_plus_05_neg = HL_rec_neg[idx_plus_05]
+gersh_plus_05 = gersh[idx_plus_05]
+KH_plus_05 = KH[idx_plus_05]
+KH_dawn_plus_05 = KH_dawn[idx_plus_05]
+KH_dusk_plus_05 = KH_dusk[idx_plus_05]
 b_perp_plus_05 = b_perp[idx_plus_05]
+
+bx_plus_05 = Bx[idx_plus_05]
+by_plus_05 = By[idx_plus_05]
+bz_plus_05 = Bz[idx_plus_05]
 
 
 # --------- - % error ------------
@@ -550,11 +676,18 @@ b_perp_plus_05 = b_perp[idx_plus_05]
 iono_time_minus_05 = minus_error[idx_minus_05]
 pressure_minus_05 = pressure_array[idx_minus_05]
 clock_minus_05 = clock_angle[idx_minus_05]
-clock_err_minus_05 = clock_angle_err[idx_minus_05]
 LL_minus_05 = LL_rec[idx_minus_05]
 HL_minus_05_pos = HL_rec_pos[idx_minus_05]
 HL_minus_05_neg = HL_rec_neg[idx_minus_05]
+gersh_minus_05 = gersh[idx_minus_05]
+KH_minus_05 = KH[idx_minus_05]
+KH_dawn_minus_05 = KH_dawn[idx_minus_05]
+KH_dusk_minus_05 = KH_dusk[idx_minus_05]
 b_perp_minus_05 = b_perp[idx_minus_05]
+
+bx_minus_05 = Bx[idx_minus_05]
+by_minus_05 = By[idx_minus_05]
+bz_minus_05 = Bz[idx_minus_05]
 
 
 
@@ -568,24 +701,36 @@ df_05_p = df_05_p.assign(PLUS_Big_DF_Index=idx_plus_05)
 df_05_p = df_05_p.assign(PLUS_Ionosphere_Time=iono_time_plus_05)
 df_05_p = df_05_p.assign(PLUS_Pressure=pressure_plus_05)
 df_05_p = df_05_p.assign(PLUS_Clock_Angle=clock_plus_05)
-df_05_p = df_05_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_05)
 df_05_p = df_05_p.assign(PLUS_LL_rec_V=LL_plus_05)
 df_05_p = df_05_p.assign(PLUS_HL_rec_V_pos=HL_plus_05_pos)
 df_05_p = df_05_p.assign(PLUS_HL_rec_V_neg=HL_plus_05_neg)
+df_05_p = df_05_p.assign(PLUS_Gershman_rec=gersh_plus_05)
+df_05_p = df_05_p.assign(PLUS_KH=KH_plus_05)
+df_05_p = df_05_p.assign(PLUS_KH_dawn=KH_dawn_plus_05)
+df_05_p = df_05_p.assign(PLUS_KH_dusk=KH_dusk_plus_05)
 df_05_p = df_05_p.assign(PLUS_B_Perp=b_perp_plus_05)
-df_05_p.to_csv(f'{root_folder}visit_05_times_plus_error_{error}_new.csv',index=False)
+df_05_p = df_05_p.assign(PLUS_Bx=bx_plus_05)
+df_05_p = df_05_p.assign(PLUS_By=by_plus_05)
+df_05_p = df_05_p.assign(PLUS_Bz=bz_plus_05)
+df_05_p.to_csv(f'{root_folder}visit_05_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_05_m = df_05_m.assign(MINUS_Big_DF_Index=idx_minus_05)
 df_05_m = df_05_m.assign(MINUS_Ionosphere_Time=iono_time_minus_05)
 df_05_m = df_05_m.assign(MINUS_Pressure=pressure_minus_05)
 df_05_m = df_05_m.assign(MINUS_Clock_Angle=clock_minus_05)
-df_05_m = df_05_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_05)
 df_05_m = df_05_m.assign(MINUS_LL_rec_V=LL_minus_05)
 df_05_m = df_05_m.assign(MINUS_HL_rec_V_pos=HL_minus_05_pos)
 df_05_m = df_05_m.assign(MINUS_HL_rec_V_neg=HL_minus_05_neg)
+df_05_m = df_05_m.assign(MINUS_Gershman_rec=gersh_minus_05)
+df_05_m = df_05_m.assign(MINUS_KH=KH_minus_05)
+df_05_m = df_05_m.assign(MINUS_KH_dawn=KH_dawn_minus_05)
+df_05_m = df_05_m.assign(MINUS_KH_dusk=KH_dusk_minus_05)
 df_05_m = df_05_m.assign(MINUS_B_Perp=b_perp_minus_05)
-df_05_m.to_csv(f'{root_folder}visit_05_times_minus_error_{error}_new.csv',index=False)
+df_05_m = df_05_m.assign(MINUS_Bx=bx_minus_05)
+df_05_m = df_05_m.assign(MINUS_By=by_minus_05)
+df_05_m = df_05_m.assign(MINUS_Bz=bz_minus_05)
+df_05_m.to_csv(f'{root_folder}visit_05_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -612,12 +757,18 @@ times_minus_08, idx_minus_08 = between_idxs(minus_error_et,first_08,last_08)
 iono_time_plus_08 = plus_error[idx_plus_08]
 pressure_plus_08 = pressure_array[idx_plus_08]
 clock_plus_08 = clock_angle[idx_plus_08]
-clock_err_plus_08 = clock_angle_err[idx_plus_08]
 LL_plus_08 = LL_rec[idx_plus_08]
 HL_plus_08_pos = HL_rec_pos[idx_plus_08] 
 HL_plus_08_neg = HL_rec_neg[idx_plus_08]
+gersh_plus_08 = gersh[idx_plus_08]
+KH_plus_08 = KH[idx_plus_08]
+KH_dawn_plus_08 = KH_dawn[idx_plus_08]
+KH_dusk_plus_08 = KH_dusk[idx_plus_08]
 b_perp_plus_08 = b_perp[idx_plus_08]
 
+bx_plus_08 = Bx[idx_plus_08]
+by_plus_08 = By[idx_plus_08]
+bz_plus_08 = Bz[idx_plus_08]
 
 
 # --------- - % error ------------
@@ -625,12 +776,18 @@ b_perp_plus_08 = b_perp[idx_plus_08]
 iono_time_minus_08 = minus_error[idx_minus_08]
 pressure_minus_08 = pressure_array[idx_minus_08]
 clock_minus_08 = clock_angle[idx_minus_08]
-clock_err_minus_08 = clock_angle_err[idx_minus_08]
 LL_minus_08 = LL_rec[idx_minus_08]
 HL_minus_08_pos = HL_rec_pos[idx_minus_08]
 HL_minus_08_neg = HL_rec_neg[idx_minus_08]
+gersh_minus_08 = gersh[idx_minus_08]
+KH_minus_08 = KH[idx_minus_08]
+KH_dawn_minus_08 = KH_dawn[idx_minus_08]
+KH_dusk_minus_08 = KH_dusk[idx_minus_08]
 b_perp_minus_08 = b_perp[idx_minus_08]
 
+bx_minus_08 = Bx[idx_minus_08]
+by_minus_08 = By[idx_minus_08]
+bz_minus_08 = Bz[idx_minus_08]
 
 
 # -------- dataframe -----------
@@ -643,24 +800,36 @@ df_08_p = df_08_p.assign(PLUS_Big_DF_Index=idx_plus_08)
 df_08_p = df_08_p.assign(PLUS_Ionosphere_Time=iono_time_plus_08)
 df_08_p = df_08_p.assign(PLUS_Pressure=pressure_plus_08)
 df_08_p = df_08_p.assign(PLUS_Clock_Angle=clock_plus_08)
-df_08_p = df_08_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_08)
 df_08_p = df_08_p.assign(PLUS_LL_rec_V=LL_plus_08)
 df_08_p = df_08_p.assign(PLUS_HL_rec_V_pos=HL_plus_08_pos)
 df_08_p = df_08_p.assign(PLUS_HL_rec_V_neg=HL_plus_08_neg)
+df_08_p = df_08_p.assign(PLUS_Gershman_rec=gersh_plus_08)
+df_08_p = df_08_p.assign(PLUS_KH=KH_plus_08)
+df_08_p = df_08_p.assign(PLUS_KH_dawn=KH_dawn_plus_08)
+df_08_p = df_08_p.assign(PLUS_KH_dusk=KH_dusk_plus_08)
 df_08_p = df_08_p.assign(PLUS_B_Perp=b_perp_plus_08)
-df_08_p.to_csv(f'{root_folder}visit_08_times_plus_error_{error}_new.csv',index=False)
+df_08_p = df_08_p.assign(PLUS_Bx=bx_plus_08)
+df_08_p = df_08_p.assign(PLUS_By=by_plus_08)
+df_08_p = df_08_p.assign(PLUS_Bz=bz_plus_08)
+df_08_p.to_csv(f'{root_folder}visit_08_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_08_m = df_08_m.assign(MINUS_Big_DF_Index=idx_minus_08)
 df_08_m = df_08_m.assign(MINUS_Ionosphere_Time=iono_time_minus_08)
 df_08_m = df_08_m.assign(MINUS_Pressure=pressure_minus_08)
 df_08_m = df_08_m.assign(MINUS_Clock_Angle=clock_minus_08)
-df_08_m = df_08_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_08)
 df_08_m = df_08_m.assign(MINUS_LL_rec_V=LL_minus_08)
 df_08_m = df_08_m.assign(MINUS_HL_rec_V_pos=HL_minus_08_pos)
 df_08_m = df_08_m.assign(MINUS_HL_rec_V_neg=HL_minus_08_neg)
+df_08_m = df_08_m.assign(MINUS_Gershman_rec=gersh_minus_08)
+df_08_m = df_08_m.assign(MINUS_KH=KH_minus_08)
+df_08_m = df_08_m.assign(MINUS_KH_dawn=KH_dawn_minus_08)
+df_08_m = df_08_m.assign(MINUS_KH_dusk=KH_dusk_minus_08)
 df_08_m = df_08_m.assign(MINUS_B_Perp=b_perp_minus_08)
-df_08_m.to_csv(f'{root_folder}visit_08_times_minus_error_{error}_new.csv',index=False)
+df_08_m = df_08_m.assign(MINUS_Bx=bx_minus_08)
+df_08_m = df_08_m.assign(MINUS_By=by_minus_08)
+df_08_m = df_08_m.assign(MINUS_Bz=bz_minus_08)
+df_08_m.to_csv(f'{root_folder}visit_08_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -687,11 +856,18 @@ times_minus_09, idx_minus_09 = between_idxs(minus_error_et,first_09,last_09)
 iono_time_plus_09 = plus_error[idx_plus_09]
 pressure_plus_09 = pressure_array[idx_plus_09]
 clock_plus_09 = clock_angle[idx_plus_09]
-clock_err_plus_09 = clock_angle_err[idx_plus_09]
 LL_plus_09 = LL_rec[idx_plus_09]
 HL_plus_09_pos = HL_rec_pos[idx_plus_09] 
 HL_plus_09_neg = HL_rec_neg[idx_plus_09]
+gersh_plus_09 = gersh[idx_plus_09]
+KH_plus_09 = KH[idx_plus_09]
+KH_dawn_plus_09 = KH_dawn[idx_plus_09]
+KH_dusk_plus_09 = KH_dusk[idx_plus_09]
 b_perp_plus_09 = b_perp[idx_plus_09]
+
+bx_plus_09 = Bx[idx_plus_09]
+by_plus_09 = By[idx_plus_09]
+bz_plus_09 = Bz[idx_plus_09]
 
 
 # --------- - % error ------------
@@ -699,12 +875,18 @@ b_perp_plus_09 = b_perp[idx_plus_09]
 iono_time_minus_09 = minus_error[idx_minus_09]
 pressure_minus_09 = pressure_array[idx_minus_09]
 clock_minus_09 = clock_angle[idx_minus_09]
-clock_err_minus_09 = clock_angle_err[idx_minus_09]
 LL_minus_09 = LL_rec[idx_minus_09]
 HL_minus_09_pos = HL_rec_pos[idx_minus_09]
 HL_minus_09_neg = HL_rec_neg[idx_minus_09]
+gersh_minus_09 = gersh[idx_minus_09]
+KH_minus_09 = KH[idx_minus_09]
+KH_dawn_minus_09 = KH_dawn[idx_minus_09]
+KH_dusk_minus_09 = KH_dusk[idx_minus_09]
 b_perp_minus_09 = b_perp[idx_minus_09]
 
+bx_minus_09 = Bx[idx_minus_09]
+by_minus_09 = By[idx_minus_09]
+bz_minus_09 = Bz[idx_minus_09]
 
 
 # -------- dataframe -----------
@@ -717,24 +899,36 @@ df_09_p = df_09_p.assign(PLUS_Big_DF_Index=idx_plus_09)
 df_09_p = df_09_p.assign(PLUS_Ionosphere_Time=iono_time_plus_09)
 df_09_p = df_09_p.assign(PLUS_Pressure=pressure_plus_09)
 df_09_p = df_09_p.assign(PLUS_Clock_Angle=clock_plus_09)
-df_09_p = df_09_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_09)
 df_09_p = df_09_p.assign(PLUS_LL_rec_V=LL_plus_09)
 df_09_p = df_09_p.assign(PLUS_HL_rec_V_pos=HL_plus_09_pos)
 df_09_p = df_09_p.assign(PLUS_HL_rec_V_neg=HL_plus_09_neg)
+df_09_p = df_09_p.assign(PLUS_Gershman_rec=gersh_plus_09)
+df_09_p = df_09_p.assign(PLUS_KH=KH_plus_09)
+df_09_p = df_09_p.assign(PLUS_KH_dawn=KH_dawn_plus_09)
+df_09_p = df_09_p.assign(PLUS_KH_dusk=KH_dusk_plus_09)
 df_09_p = df_09_p.assign(PLUS_B_Perp=b_perp_plus_09)
-df_09_p.to_csv(f'{root_folder}visit_09_times_plus_error_{error}_new.csv',index=False)
+df_09_p = df_09_p.assign(PLUS_Bx=bx_plus_09)
+df_09_p = df_09_p.assign(PLUS_By=by_plus_09)
+df_09_p = df_09_p.assign(PLUS_Bz=bz_plus_09)
+df_09_p.to_csv(f'{root_folder}visit_09_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_09_m = df_09_m.assign(MINUS_Big_DF_Index=idx_minus_09)
 df_09_m = df_09_m.assign(MINUS_Ionosphere_Time=iono_time_minus_09)
 df_09_m = df_09_m.assign(MINUS_Pressure=pressure_minus_09)
 df_09_m = df_09_m.assign(MINUS_Clock_Angle=clock_minus_09)
-df_09_m = df_09_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_09)
 df_09_m = df_09_m.assign(MINUS_LL_rec_V=LL_minus_09)
 df_09_m = df_09_m.assign(MINUS_HL_rec_V_pos=HL_minus_09_pos)
 df_09_m = df_09_m.assign(MINUS_HL_rec_V_neg=HL_minus_09_neg)
+df_09_m = df_09_m.assign(MINUS_Gershman_rec=gersh_minus_09)
+df_09_m = df_09_m.assign(MINUS_KH=KH_minus_09)
+df_09_m = df_09_m.assign(MINUS_KH_dawn=KH_dawn_minus_09)
+df_09_m = df_09_m.assign(MINUS_KH_dusk=KH_dusk_minus_09)
 df_09_m = df_09_m.assign(MINUS_B_Perp=b_perp_minus_09)
-df_09_m.to_csv(f'{root_folder}visit_09_times_minus_error_{error}_new.csv',index=False)
+df_09_m = df_09_m.assign(MINUS_Bx=bx_minus_09)
+df_09_m = df_09_m.assign(MINUS_By=by_minus_09)
+df_09_m = df_09_m.assign(MINUS_Bz=bz_minus_09)
+df_09_m.to_csv(f'{root_folder}visit_09_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -761,11 +955,18 @@ times_minus_10, idx_minus_10 = between_idxs(minus_error_et,first_10,last_10)
 iono_time_plus_10 = plus_error[idx_plus_10]
 pressure_plus_10 = pressure_array[idx_plus_10]
 clock_plus_10 = clock_angle[idx_plus_10]
-clock_err_plus_10 = clock_angle_err[idx_plus_10]
 LL_plus_10 = LL_rec[idx_plus_10]
 HL_plus_10_pos = HL_rec_pos[idx_plus_10] 
 HL_plus_10_neg = HL_rec_neg[idx_plus_10]
+gersh_plus_10 = gersh[idx_plus_10]
+KH_plus_10 = KH[idx_plus_10]
+KH_dawn_plus_10 = KH_dawn[idx_plus_10]
+KH_dusk_plus_10 = KH_dusk[idx_plus_10]
 b_perp_plus_10 = b_perp[idx_plus_10]
+
+bx_plus_10 = Bx[idx_plus_10]
+by_plus_10 = By[idx_plus_10]
+bz_plus_10 = Bz[idx_plus_10]
 
 
 # --------- - % error ------------
@@ -773,12 +974,18 @@ b_perp_plus_10 = b_perp[idx_plus_10]
 iono_time_minus_10 = minus_error[idx_minus_10]
 pressure_minus_10 = pressure_array[idx_minus_10]
 clock_minus_10 = clock_angle[idx_minus_10]
-clock_err_minus_10 = clock_angle_err[idx_minus_10]
 LL_minus_10 = LL_rec[idx_minus_10]
 HL_minus_10_pos = HL_rec_pos[idx_minus_10] 
 HL_minus_10_neg = HL_rec_neg[idx_minus_10]
+gersh_minus_10 = gersh[idx_minus_10]
+KH_minus_10 = KH[idx_minus_10]
+KH_dawn_minus_10 = KH_dawn[idx_minus_10]
+KH_dusk_minus_10 = KH_dusk[idx_minus_10]
 b_perp_minus_10 = b_perp[idx_minus_10]
 
+bx_minus_10 = Bx[idx_minus_10]
+by_minus_10 = By[idx_minus_10]
+bz_minus_10 = Bz[idx_minus_10]
 
 
 # -------- dataframe -----------
@@ -791,24 +998,36 @@ df_10_p = df_10_p.assign(PLUS_Big_DF_Index=idx_plus_10)
 df_10_p = df_10_p.assign(PLUS_Ionosphere_Time=iono_time_plus_10)
 df_10_p = df_10_p.assign(PLUS_Pressure=pressure_plus_10)
 df_10_p = df_10_p.assign(PLUS_Clock_Angle=clock_plus_10)
-df_10_p = df_10_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_10)
 df_10_p = df_10_p.assign(PLUS_LL_rec_V=LL_plus_10)
 df_10_p = df_10_p.assign(PLUS_HL_rec_V_pos=HL_plus_10_pos)
 df_10_p = df_10_p.assign(PLUS_HL_rec_V_neg=HL_plus_10_neg)
+df_10_p = df_10_p.assign(PLUS_Gershman_rec=gersh_plus_10)
+df_10_p = df_10_p.assign(PLUS_KH=KH_plus_10)
+df_10_p = df_10_p.assign(PLUS_KH_dawn=KH_dawn_plus_10)
+df_10_p = df_10_p.assign(PLUS_KH_dusk=KH_dusk_plus_10)
 df_10_p = df_10_p.assign(PLUS_B_Perp=b_perp_plus_10)
-df_10_p.to_csv(f'{root_folder}visit_10_times_plus_error_{error}_new.csv',index=False)
+df_10_p = df_10_p.assign(PLUS_Bx=bx_plus_10)
+df_10_p = df_10_p.assign(PLUS_By=by_plus_10)
+df_10_p = df_10_p.assign(PLUS_Bz=bz_plus_10)
+df_10_p.to_csv(f'{root_folder}visit_10_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_10_m = df_10_m.assign(MINUS_Big_DF_Index=idx_minus_10)
 df_10_m = df_10_m.assign(MINUS_Ionosphere_Time=iono_time_minus_10)
 df_10_m = df_10_m.assign(MINUS_Pressure=pressure_minus_10)
 df_10_m = df_10_m.assign(MINUS_Clock_Angle=clock_minus_10)
-df_10_m = df_10_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_10)
 df_10_m = df_10_m.assign(MINUS_LL_rec_V=LL_minus_10)
 df_10_m = df_10_m.assign(MINUS_HL_rec_V_pos=HL_minus_10_pos)
 df_10_m = df_10_m.assign(MINUS_HL_rec_V_neg=HL_minus_10_neg)
+df_10_m = df_10_m.assign(MINUS_Gershman_rec=gersh_minus_10)
+df_10_m = df_10_m.assign(MINUS_KH=KH_minus_10)
+df_10_m = df_10_m.assign(MINUS_KH_dawn=KH_dawn_minus_10)
+df_10_m = df_10_m.assign(MINUS_KH_dusk=KH_dusk_minus_10)
 df_10_m = df_10_m.assign(MINUS_B_Perp=b_perp_minus_10)
-df_10_m.to_csv(f'{root_folder}visit_10_times_minus_error_{error}_new.csv',index=False)
+df_10_m = df_10_m.assign(MINUS_Bx=bx_minus_10)
+df_10_m = df_10_m.assign(MINUS_By=by_minus_10)
+df_10_m = df_10_m.assign(MINUS_Bz=bz_minus_10)
+df_10_m.to_csv(f'{root_folder}visit_10_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -834,11 +1053,18 @@ times_minus_11, idx_minus_11 = between_idxs(minus_error_et,first_11,last_11)
 iono_time_plus_11 = plus_error[idx_plus_11]
 pressure_plus_11 = pressure_array[idx_plus_11]
 clock_plus_11 = clock_angle[idx_plus_11]
-clock_err_plus_11 = clock_angle_err[idx_plus_11]
 LL_plus_11 = LL_rec[idx_plus_11]
 HL_plus_11_pos = HL_rec_pos[idx_plus_11] 
 HL_plus_11_neg = HL_rec_neg[idx_plus_11]
+gersh_plus_11 = gersh[idx_plus_11]
+KH_plus_11 = KH[idx_plus_11]
+KH_dawn_plus_11 = KH_dawn[idx_plus_11]
+KH_dusk_plus_11 = KH_dusk[idx_plus_11]
 b_perp_plus_11 = b_perp[idx_plus_11]
+
+bx_plus_11 = Bx[idx_plus_11]
+by_plus_11 = By[idx_plus_11]
+bz_plus_11 = Bz[idx_plus_11]
 
 
 # --------- - % error ------------
@@ -846,12 +1072,18 @@ b_perp_plus_11 = b_perp[idx_plus_11]
 iono_time_minus_11 = minus_error[idx_minus_11]
 pressure_minus_11 = pressure_array[idx_minus_11]
 clock_minus_11 = clock_angle[idx_minus_11]
-clock_err_minus_11 = clock_angle_err[idx_minus_11]
 LL_minus_11 = LL_rec[idx_minus_11]
 HL_minus_11_pos = HL_rec_pos[idx_minus_11]
 HL_minus_11_neg = HL_rec_neg[idx_minus_11]
+gersh_minus_11 = gersh[idx_minus_11]
+KH_minus_11 = KH[idx_minus_11]
+KH_dawn_minus_11 = KH_dawn[idx_minus_11]
+KH_dusk_minus_11 = KH_dusk[idx_minus_11]
 b_perp_minus_11 = b_perp[idx_minus_11]
 
+bx_minus_11 = Bx[idx_minus_11]
+by_minus_11 = By[idx_minus_11]
+bz_minus_11 = Bz[idx_minus_11]
 
 
 # -------- dataframe -----------
@@ -864,24 +1096,36 @@ df_11_p = df_11_p.assign(PLUS_Big_DF_Index=idx_plus_11)
 df_11_p = df_11_p.assign(PLUS_Ionosphere_Time=iono_time_plus_11)
 df_11_p = df_11_p.assign(PLUS_Pressure=pressure_plus_11)
 df_11_p = df_11_p.assign(PLUS_Clock_Angle=clock_plus_11)
-df_11_p = df_11_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_11)
 df_11_p = df_11_p.assign(PLUS_LL_rec_V=LL_plus_11)
 df_11_p = df_11_p.assign(PLUS_HL_rec_V_pos=HL_plus_11_pos)
 df_11_p = df_11_p.assign(PLUS_HL_rec_V_neg=HL_plus_11_neg)
+df_11_p = df_11_p.assign(PLUS_Gershman_rec=gersh_plus_11)
+df_11_p = df_11_p.assign(PLUS_KH=KH_plus_11)
+df_11_p = df_11_p.assign(PLUS_KH_dawn=KH_dawn_plus_11)
+df_11_p = df_11_p.assign(PLUS_KH_dusk=KH_dusk_plus_11)
 df_11_p = df_11_p.assign(PLUS_B_Perp=b_perp_plus_11)
-df_11_p.to_csv(f'{root_folder}visit_11_times_plus_error_{error}_new.csv',index=False)
+df_11_p = df_11_p.assign(PLUS_Bx=bx_plus_11)
+df_11_p = df_11_p.assign(PLUS_By=by_plus_11)
+df_11_p = df_11_p.assign(PLUS_Bz=bz_plus_11)
+df_11_p.to_csv(f'{root_folder}visit_11_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_11_m = df_11_m.assign(MINUS_Big_DF_Index=idx_minus_11)
 df_11_m = df_11_m.assign(MINUS_Ionosphere_Time=iono_time_minus_11)
 df_11_m = df_11_m.assign(MINUS_Pressure=pressure_minus_11)
 df_11_m = df_11_m.assign(MINUS_Clock_Angle=clock_minus_11)
-df_11_m = df_11_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_11)
 df_11_m = df_11_m.assign(MINUS_LL_rec_V=LL_minus_11)
 df_11_m = df_11_m.assign(MINUS_HL_rec_V_pos=HL_minus_11_pos)
 df_11_m = df_11_m.assign(MINUS_HL_rec_V_neg=HL_minus_11_neg)
+df_11_m = df_11_m.assign(MINUS_Gershman_rec=gersh_minus_11)
+df_11_m = df_11_m.assign(MINUS_KH=KH_minus_11)
+df_11_m = df_11_m.assign(MINUS_KH_dawn=KH_dawn_minus_11)
+df_11_m = df_11_m.assign(MINUS_KH_dusk=KH_dusk_minus_11)
 df_11_m = df_11_m.assign(MINUS_B_Perp=b_perp_minus_11)
-df_11_m.to_csv(f'{root_folder}visit_11_times_minus_error_{error}_new.csv',index=False)
+df_11_m = df_11_m.assign(MINUS_Bx=bx_minus_11)
+df_11_m = df_11_m.assign(MINUS_By=by_minus_11)
+df_11_m = df_11_m.assign(MINUS_Bz=bz_minus_11)
+df_11_m.to_csv(f'{root_folder}visit_11_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -908,11 +1152,18 @@ times_minus_12, idx_minus_12 = between_idxs(minus_error_et,first_12,last_12)
 iono_time_plus_12 = plus_error[idx_plus_12]
 pressure_plus_12 = pressure_array[idx_plus_12]
 clock_plus_12 = clock_angle[idx_plus_12]
-clock_err_plus_12 = clock_angle_err[idx_plus_12]
 LL_plus_12 = LL_rec[idx_plus_12]
 HL_plus_12_pos = HL_rec_pos[idx_plus_12] 
 HL_plus_12_neg = HL_rec_neg[idx_plus_12]
+gersh_plus_12 = gersh[idx_plus_12]
+KH_plus_12 = KH[idx_plus_12]
+KH_dawn_plus_12 = KH_dawn[idx_plus_12]
+KH_dusk_plus_12 = KH_dusk[idx_plus_12]
 b_perp_plus_12 = b_perp[idx_plus_12]
+
+bx_plus_12 = Bx[idx_plus_12]
+by_plus_12 = By[idx_plus_12]
+bz_plus_12 = Bz[idx_plus_12]
 
 
 # --------- - % error ------------
@@ -920,12 +1171,18 @@ b_perp_plus_12 = b_perp[idx_plus_12]
 iono_time_minus_12 = minus_error[idx_minus_12]
 pressure_minus_12 = pressure_array[idx_minus_12]
 clock_minus_12 = clock_angle[idx_minus_12]
-clock_err_minus_12 = clock_angle_err[idx_minus_12]
 LL_minus_12 = LL_rec[idx_minus_12]
 HL_minus_12_pos = HL_rec_pos[idx_minus_12]
 HL_minus_12_neg = HL_rec_neg[idx_minus_12]
+gersh_minus_12 = gersh[idx_minus_12]
+KH_minus_12 = KH[idx_minus_12]
+KH_dawn_minus_12 = KH_dawn[idx_minus_12]
+KH_dusk_minus_12 = KH_dusk[idx_minus_12]
 b_perp_minus_12 = b_perp[idx_minus_12]
 
+bx_minus_12 = Bx[idx_minus_12]
+by_minus_12 = By[idx_minus_12]
+bz_minus_12 = Bz[idx_minus_12]
 
 
 # -------- dataframe -----------
@@ -938,24 +1195,36 @@ df_12_p = df_12_p.assign(PLUS_Big_DF_Index=idx_plus_12)
 df_12_p = df_12_p.assign(PLUS_Ionosphere_Time=iono_time_plus_12)
 df_12_p = df_12_p.assign(PLUS_Pressure=pressure_plus_12)
 df_12_p = df_12_p.assign(PLUS_Clock_Angle=clock_plus_12)
-df_12_p = df_12_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_12)
 df_12_p = df_12_p.assign(PLUS_LL_rec_V=LL_plus_12)
 df_12_p = df_12_p.assign(PLUS_HL_rec_V_pos=HL_plus_12_pos)
 df_12_p = df_12_p.assign(PLUS_HL_rec_V_neg=HL_plus_12_neg)
+df_12_p = df_12_p.assign(PLUS_Gershman_rec=gersh_plus_12)
+df_12_p = df_12_p.assign(PLUS_KH=KH_plus_12)
+df_12_p = df_12_p.assign(PLUS_KH_dawn=KH_dawn_plus_12)
+df_12_p = df_12_p.assign(PLUS_KH_dusk=KH_dusk_plus_12)
 df_12_p = df_12_p.assign(PLUS_B_Perp=b_perp_plus_12)
-df_12_p.to_csv(f'{root_folder}visit_12_times_plus_error_{error}_new.csv',index=False)
+df_12_p = df_12_p.assign(PLUS_Bx=bx_plus_12)
+df_12_p = df_12_p.assign(PLUS_By=by_plus_12)
+df_12_p = df_12_p.assign(PLUS_Bz=bz_plus_12)
+df_12_p.to_csv(f'{root_folder}visit_12_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_12_m = df_12_m.assign(MINUS_Big_DF_Index=idx_minus_12)
 df_12_m = df_12_m.assign(MINUS_Ionosphere_Time=iono_time_minus_12)
 df_12_m = df_12_m.assign(MINUS_Pressure=pressure_minus_12)
 df_12_m = df_12_m.assign(MINUS_Clock_Angle=clock_minus_12)
-df_12_m = df_12_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_12)
 df_12_m = df_12_m.assign(MINUS_LL_rec_V=LL_minus_12)
 df_12_m = df_12_m.assign(MINUS_HL_rec_V_pos=HL_minus_12_pos)
 df_12_m = df_12_m.assign(MINUS_HL_rec_V_neg=HL_minus_12_neg)
+df_12_m = df_12_m.assign(MINUS_Gershman_rec=gersh_minus_12)
+df_12_m = df_12_m.assign(MINUS_KH=KH_minus_12)
+df_12_m = df_12_m.assign(MINUS_KH_dawn=KH_dawn_minus_12)
+df_12_m = df_12_m.assign(MINUS_KH_dusk=KH_dusk_minus_12)
 df_12_m = df_12_m.assign(MINUS_B_Perp=b_perp_minus_12)
-df_12_m.to_csv(f'{root_folder}visit_12_times_minus_error_{error}_new.csv',index=False)
+df_12_m = df_12_m.assign(MINUS_Bx=bx_minus_12)
+df_12_m = df_12_m.assign(MINUS_By=by_minus_12)
+df_12_m = df_12_m.assign(MINUS_Bz=bz_minus_12)
+df_12_m.to_csv(f'{root_folder}visit_12_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -981,11 +1250,18 @@ times_minus_15, idx_minus_15 = between_idxs(minus_error_et,first_15,last_15)
 iono_time_plus_15 = plus_error[idx_plus_15]
 pressure_plus_15 = pressure_array[idx_plus_15]
 clock_plus_15 = clock_angle[idx_plus_15]
-clock_err_plus_15 = clock_angle_err[idx_plus_15]
 LL_plus_15 = LL_rec[idx_plus_15]
 HL_plus_15_pos = HL_rec_pos[idx_plus_15] 
 HL_plus_15_neg = HL_rec_neg[idx_plus_15]
+gersh_plus_15 = gersh[idx_plus_15]
+KH_plus_15 = KH[idx_plus_15]
+KH_dawn_plus_15 = KH_dawn[idx_plus_15]
+KH_dusk_plus_15 = KH_dusk[idx_plus_15]
 b_perp_plus_15 = b_perp[idx_plus_15]
+
+bx_plus_15 = Bx[idx_plus_15]
+by_plus_15 = By[idx_plus_15]
+bz_plus_15 = Bz[idx_plus_15]
 
 
 # --------- - % error ------------
@@ -993,11 +1269,18 @@ b_perp_plus_15 = b_perp[idx_plus_15]
 iono_time_minus_15 = minus_error[idx_minus_15]
 pressure_minus_15 = pressure_array[idx_minus_15]
 clock_minus_15 = clock_angle[idx_minus_15]
-clock_err_minus_15 = clock_angle_err[idx_minus_15]
 LL_minus_15 = LL_rec[idx_minus_15]
 HL_minus_15_pos = HL_rec_pos[idx_minus_15]
 HL_minus_15_neg = HL_rec_neg[idx_minus_15]
+gersh_minus_15 = gersh[idx_minus_15]
+KH_minus_15 = KH[idx_minus_15]
+KH_dawn_minus_15 = KH_dawn[idx_minus_15]
+KH_dusk_minus_15 = KH_dusk[idx_minus_15]
 b_perp_minus_15 = b_perp[idx_minus_15]
+
+bx_minus_15 = Bx[idx_minus_15]
+by_minus_15 = By[idx_minus_15]
+bz_minus_15 = Bz[idx_minus_15]
 
 
 # -------- dataframe -----------
@@ -1010,24 +1293,36 @@ df_15_p = df_15_p.assign(PLUS_Big_DF_Index=idx_plus_15)
 df_15_p = df_15_p.assign(PLUS_Ionosphere_Time=iono_time_plus_15)
 df_15_p = df_15_p.assign(PLUS_Pressure=pressure_plus_15)
 df_15_p = df_15_p.assign(PLUS_Clock_Angle=clock_plus_15)
-df_15_p = df_15_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_15)
 df_15_p = df_15_p.assign(PLUS_LL_rec_V=LL_plus_15)
 df_15_p = df_15_p.assign(PLUS_HL_rec_V_pos=HL_plus_15_pos)
 df_15_p = df_15_p.assign(PLUS_HL_rec_V_neg=HL_plus_15_neg)
+df_15_p = df_15_p.assign(PLUS_Gershman_rec=gersh_plus_15)
+df_15_p = df_15_p.assign(PLUS_KH=KH_plus_15)
+df_15_p = df_15_p.assign(PLUS_KH_dawn=KH_dawn_plus_15)
+df_15_p = df_15_p.assign(PLUS_KH_dusk=KH_dusk_plus_15)
 df_15_p = df_15_p.assign(PLUS_B_Perp=b_perp_plus_15)
-df_15_p.to_csv(f'{root_folder}visit_15_times_plus_error_{error}_new.csv',index=False)
+df_15_p = df_15_p.assign(PLUS_Bx=bx_plus_15)
+df_15_p = df_15_p.assign(PLUS_By=by_plus_15)
+df_15_p = df_15_p.assign(PLUS_Bz=bz_plus_15)
+df_15_p.to_csv(f'{root_folder}visit_15_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_15_m = df_15_m.assign(MINUS_Big_DF_Index=idx_minus_15)
 df_15_m = df_15_m.assign(MINUS_Ionosphere_Time=iono_time_minus_15)
 df_15_m = df_15_m.assign(MINUS_Pressure=pressure_minus_15)
 df_15_m = df_15_m.assign(MINUS_Clock_Angle=clock_minus_15)
-df_15_m = df_15_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_15)
 df_15_m = df_15_m.assign(MINUS_LL_rec_V=LL_minus_15)
 df_15_m = df_15_m.assign(MINUS_HL_rec_V_pos=HL_minus_15_pos)
 df_15_m = df_15_m.assign(MINUS_HL_rec_V_neg=HL_minus_15_neg)
+df_15_m = df_15_m.assign(MINUS_Gershman_rec=gersh_minus_15)
+df_15_m = df_15_m.assign(MINUS_KH=KH_minus_15)
+df_15_m = df_15_m.assign(MINUS_KH_dawn=KH_dawn_minus_15)
+df_15_m = df_15_m.assign(MINUS_KH_dusk=KH_dusk_minus_15)
 df_15_m = df_15_m.assign(MINUS_B_Perp=b_perp_minus_15)
-df_15_m.to_csv(f'{root_folder}visit_15_times_minus_error_{error}_new.csv',index=False)
+df_15_m = df_15_m.assign(MINUS_Bx=bx_minus_15)
+df_15_m = df_15_m.assign(MINUS_By=by_minus_15)
+df_15_m = df_15_m.assign(MINUS_Bz=bz_minus_15)
+df_15_m.to_csv(f'{root_folder}visit_15_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -1054,11 +1349,18 @@ times_minus_16, idx_minus_16 = between_idxs(minus_error_et,first_16,last_16)
 iono_time_plus_16 = plus_error[idx_plus_16]
 pressure_plus_16 = pressure_array[idx_plus_16]
 clock_plus_16 = clock_angle[idx_plus_16]
-clock_err_plus_16 = clock_angle_err[idx_plus_16]
 LL_plus_16 = LL_rec[idx_plus_16]
 HL_plus_16_pos = HL_rec_pos[idx_plus_16] 
 HL_plus_16_neg = HL_rec_neg[idx_plus_16]
+gersh_plus_16 = gersh[idx_plus_16]
+KH_plus_16 = KH[idx_plus_16]
+KH_dawn_plus_16 = KH_dawn[idx_plus_16]
+KH_dusk_plus_16 = KH_dusk[idx_plus_16]
 b_perp_plus_16 = b_perp[idx_plus_16]
+
+bx_plus_16 = Bx[idx_plus_16]
+by_plus_16 = By[idx_plus_16]
+bz_plus_16 = Bz[idx_plus_16]
 
 
 # --------- - % error ------------
@@ -1066,11 +1368,18 @@ b_perp_plus_16 = b_perp[idx_plus_16]
 iono_time_minus_16 = minus_error[idx_minus_16]
 pressure_minus_16  = pressure_array[idx_minus_16]
 clock_minus_16 = clock_angle[idx_minus_16]
-clock_err_minus_16 = clock_angle_err[idx_minus_16]
 LL_minus_16 = LL_rec[idx_minus_16]
 HL_minus_16_pos = HL_rec_pos[idx_minus_16]
 HL_minus_16_neg = HL_rec_neg[idx_minus_16]
+gersh_minus_16 = gersh[idx_minus_16]
+KH_minus_16 = KH[idx_minus_16]
+KH_dawn_minus_16 = KH_dawn[idx_minus_16]
+KH_dusk_minus_16 = KH_dusk[idx_minus_16]
 b_perp_minus_16 = b_perp[idx_minus_16]
+
+bx_minus_16 = Bx[idx_minus_16]
+by_minus_16 = By[idx_minus_16]
+bz_minus_16 = Bz[idx_minus_16]
 
 
 
@@ -1084,24 +1393,36 @@ df_16_p = df_16_p.assign(PLUS_Big_DF_Index=idx_plus_16)
 df_16_p = df_16_p.assign(PLUS_Ionosphere_Time=iono_time_plus_16)
 df_16_p = df_16_p.assign(PLUS_Pressure=pressure_plus_16)
 df_16_p = df_16_p.assign(PLUS_Clock_Angle=clock_plus_16)
-df_16_p = df_16_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_16)
 df_16_p = df_16_p.assign(PLUS_LL_rec_V=LL_plus_16)
 df_16_p = df_16_p.assign(PLUS_HL_rec_V_pos=HL_plus_16_pos)
 df_16_p = df_16_p.assign(PLUS_HL_rec_V_neg=HL_plus_16_neg)
+df_16_p = df_16_p.assign(PLUS_Gershman_rec=gersh_plus_16)
+df_16_p = df_16_p.assign(PLUS_KH=KH_plus_16)
+df_16_p = df_16_p.assign(PLUS_KH_dawn=KH_dawn_plus_16)
+df_16_p = df_16_p.assign(PLUS_KH_dusk=KH_dusk_plus_16)
 df_16_p = df_16_p.assign(PLUS_B_Perp=b_perp_plus_16)
-df_16_p.to_csv(f'{root_folder}visit_16_times_plus_error_{error}_new.csv',index=False)
+df_16_p = df_16_p.assign(PLUS_Bx=bx_plus_16)
+df_16_p = df_16_p.assign(PLUS_By=by_plus_16)
+df_16_p = df_16_p.assign(PLUS_Bz=bz_plus_16)
+df_16_p.to_csv(f'{root_folder}visit_16_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_16_m = df_16_m.assign(MINUS_Big_DF_Index=idx_minus_16)
 df_16_m = df_16_m.assign(MINUS_Ionosphere_Time=iono_time_minus_16)
 df_16_m = df_16_m.assign(MINUS_Pressure=pressure_minus_16)
 df_16_m = df_16_m.assign(MINUS_Clock_Angle=clock_minus_16)
-df_16_m = df_16_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_16)
 df_16_m = df_16_m.assign(MINUS_LL_rec_V=LL_minus_16)
 df_16_m = df_16_m.assign(MINUS_HL_rec_V_pos=HL_minus_16_pos)
 df_16_m = df_16_m.assign(MINUS_HL_rec_V_neg=HL_minus_16_neg)
+df_16_m = df_16_m.assign(MINUS_Gershman_rec=gersh_minus_16)
+df_16_m = df_16_m.assign(MINUS_KH=KH_minus_16)
+df_16_m = df_16_m.assign(MINUS_KH_dawn=KH_dawn_minus_16)
+df_16_m = df_16_m.assign(MINUS_KH_dusk=KH_dusk_minus_16)
 df_16_m = df_16_m.assign(MINUS_B_Perp=b_perp_minus_16)
-df_16_m.to_csv(f'{root_folder}visit_16_times_minus_error_{error}_new.csv',index=False)
+df_16_m = df_16_m.assign(MINUS_Bx=bx_minus_16)
+df_16_m = df_16_m.assign(MINUS_By=by_minus_16)
+df_16_m = df_16_m.assign(MINUS_Bz=bz_minus_16)
+df_16_m.to_csv(f'{root_folder}visit_16_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -1128,11 +1449,18 @@ times_minus_17, idx_minus_17 = between_idxs(minus_error_et,first_17,last_17)
 iono_time_plus_17 = plus_error[idx_plus_17]
 pressure_plus_17 = pressure_array[idx_plus_17]
 clock_plus_17 = clock_angle[idx_plus_17]
-clock_err_plus_17 = clock_angle_err[idx_plus_17]
 LL_plus_17 = LL_rec[idx_plus_17]
 HL_plus_17_pos = HL_rec_pos[idx_plus_17] 
 HL_plus_17_neg = HL_rec_neg[idx_plus_17]
+gersh_plus_17 = gersh[idx_plus_17]
+KH_plus_17 = KH[idx_plus_17]
+KH_dawn_plus_17 = KH_dawn[idx_plus_17]
+KH_dusk_plus_17 = KH_dusk[idx_plus_17]
 b_perp_plus_17 = b_perp[idx_plus_17]
+
+bx_plus_17 = Bx[idx_plus_17]
+by_plus_17 = By[idx_plus_17]
+bz_plus_17 = Bz[idx_plus_17]
 
 
 # --------- - % error ------------
@@ -1140,11 +1468,18 @@ b_perp_plus_17 = b_perp[idx_plus_17]
 iono_time_minus_17 = minus_error[idx_minus_17]
 pressure_minus_17  = pressure_array[idx_minus_17]
 clock_minus_17 = clock_angle[idx_minus_17]
-clock_err_minus_17 = clock_angle_err[idx_minus_17]
 LL_minus_17 = LL_rec[idx_minus_17]
 HL_minus_17_pos = HL_rec_pos[idx_minus_17]
 HL_minus_17_neg = HL_rec_neg[idx_minus_17]
+gersh_minus_17 = gersh[idx_minus_17]
+KH_minus_17 = KH[idx_minus_17]
+KH_dawn_minus_17 = KH_dawn[idx_minus_17]
+KH_dusk_minus_17 = KH_dusk[idx_minus_17]
 b_perp_minus_17 = b_perp[idx_minus_17]
+
+bx_minus_17 = Bx[idx_minus_17]
+by_minus_17 = By[idx_minus_17]
+bz_minus_17 = Bz[idx_minus_17]
 
 
 
@@ -1158,24 +1493,36 @@ df_17_p = df_17_p.assign(PLUS_Big_DF_Index=idx_plus_17)
 df_17_p = df_17_p.assign(PLUS_Ionosphere_Time=iono_time_plus_17)
 df_17_p = df_17_p.assign(PLUS_Pressure=pressure_plus_17)
 df_17_p = df_17_p.assign(PLUS_Clock_Angle=clock_plus_17)
-df_17_p = df_17_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_17)
 df_17_p = df_17_p.assign(PLUS_LL_rec_V=LL_plus_17)
 df_17_p = df_17_p.assign(PLUS_HL_rec_V_pos=HL_plus_17_pos)
 df_17_p = df_17_p.assign(PLUS_HL_rec_V_neg=HL_plus_17_neg)
+df_17_p = df_17_p.assign(PLUS_Gershman_rec=gersh_plus_17)
+df_17_p = df_17_p.assign(PLUS_KH=KH_plus_17)
+df_17_p = df_17_p.assign(PLUS_KH_dawn=KH_dawn_plus_17)
+df_17_p = df_17_p.assign(PLUS_KH_dusk=KH_dusk_plus_17)
 df_17_p = df_17_p.assign(PLUS_B_Perp=b_perp_plus_17)
-df_17_p.to_csv(f'{root_folder}visit_17_times_plus_error_{error}_new.csv',index=False)
+df_17_p = df_17_p.assign(PLUS_Bx=bx_plus_17)
+df_17_p = df_17_p.assign(PLUS_By=by_plus_17)
+df_17_p = df_17_p.assign(PLUS_Bz=bz_plus_17)
+df_17_p.to_csv(f'{root_folder}visit_17_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_17_m = df_17_m.assign(MINUS_Big_DF_Index=idx_minus_17)
 df_17_m = df_17_m.assign(MINUS_Ionosphere_Time=iono_time_minus_17)
 df_17_m = df_17_m.assign(MINUS_Pressure=pressure_minus_17)
 df_17_m = df_17_m.assign(MINUS_Clock_Angle=clock_minus_17)
-df_17_m = df_17_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_17)
 df_17_m = df_17_m.assign(MINUS_LL_rec_V=LL_minus_17)
 df_17_m = df_17_m.assign(MINUS_HL_rec_V_pos=HL_minus_17_pos)
 df_17_m = df_17_m.assign(MINUS_HL_rec_V_neg=HL_minus_17_neg)
+df_17_m = df_17_m.assign(MINUS_Gershman_rec=gersh_minus_17)
+df_17_m = df_17_m.assign(MINUS_KH=KH_minus_17)
+df_17_m = df_17_m.assign(MINUS_KH_dawn=KH_dawn_minus_17)
+df_17_m = df_17_m.assign(MINUS_KH_dusk=KH_dusk_minus_17)
 df_17_m = df_17_m.assign(MINUS_B_Perp=b_perp_minus_17)
-df_17_m.to_csv(f'{root_folder}visit_17_times_minus_error_{error}_new.csv',index=False)
+df_17_m = df_17_m.assign(MINUS_Bx=bx_minus_17)
+df_17_m = df_17_m.assign(MINUS_By=by_minus_17)
+df_17_m = df_17_m.assign(MINUS_Bz=bz_minus_17)
+df_17_m.to_csv(f'{root_folder}visit_17_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -1201,11 +1548,18 @@ times_minus_18, idx_minus_18 = between_idxs(minus_error_et,first_18,last_18)
 iono_time_plus_18 = plus_error[idx_plus_18]
 pressure_plus_18 = pressure_array[idx_plus_18]
 clock_plus_18 = clock_angle[idx_plus_18]
-clock_err_plus_18 = clock_angle_err[idx_plus_18]
 LL_plus_18 = LL_rec[idx_plus_18]
 HL_plus_18_pos = HL_rec_pos[idx_plus_18] 
 HL_plus_18_neg = HL_rec_neg[idx_plus_18]
+gersh_plus_18 =  gersh[idx_plus_18]
+KH_plus_18 = KH[idx_plus_18]
+KH_dawn_plus_18 = KH_dawn[idx_plus_18]
+KH_dusk_plus_18 = KH_dusk[idx_plus_18]
 b_perp_plus_18 = b_perp[idx_plus_18]
+
+bx_plus_18 = Bx[idx_plus_18]
+by_plus_18 = By[idx_plus_18]
+bz_plus_18 = Bz[idx_plus_18]
 
 
 # --------- - % error ------------
@@ -1213,12 +1567,18 @@ b_perp_plus_18 = b_perp[idx_plus_18]
 iono_time_minus_18 = minus_error[idx_minus_18]
 pressure_minus_18  = pressure_array[idx_minus_18]
 clock_minus_18 = clock_angle[idx_minus_18]
-clock_err_minus_18 = clock_angle_err[idx_minus_18]
 LL_minus_18 = LL_rec[idx_minus_18]
 HL_minus_18_pos = HL_rec_pos[idx_minus_18]
 HL_minus_18_neg = HL_rec_neg[idx_minus_18]
+gersh_minus_18 = gersh[idx_minus_18]
+KH_minus_18 = KH[idx_minus_18]
+KH_dawn_minus_18 = KH_dawn[idx_minus_18]
+KH_dusk_minus_18 = KH_dusk[idx_minus_18]
 b_perp_minus_18 = b_perp[idx_minus_18]
 
+bx_minus_18 = Bx[idx_minus_18]
+by_minus_18 = By[idx_minus_18]
+bz_minus_18 = Bz[idx_minus_18]
 
 
 # -------- dataframe -----------
@@ -1231,24 +1591,36 @@ df_18_p = df_18_p.assign(PLUS_Big_DF_Index=idx_plus_18)
 df_18_p = df_18_p.assign(PLUS_Ionosphere_Time=iono_time_plus_18)
 df_18_p = df_18_p.assign(PLUS_Pressure=pressure_plus_18)
 df_18_p = df_18_p.assign(PLUS_Clock_Angle=clock_plus_18)
-df_18_p = df_18_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_18)
 df_18_p = df_18_p.assign(PLUS_LL_rec_V=LL_plus_18)
 df_18_p = df_18_p.assign(PLUS_HL_rec_V_pos=HL_plus_18_pos)
 df_18_p = df_18_p.assign(PLUS_HL_rec_V_neg=HL_plus_18_neg)
+df_18_p = df_18_p.assign(PLUS_Gershman_rec=gersh_plus_18)
+df_18_p = df_18_p.assign(PLUS_KH=KH_plus_18)
+df_18_p = df_18_p.assign(PLUS_KH_dawn=KH_dawn_plus_18)
+df_18_p = df_18_p.assign(PLUS_KH_dusk=KH_dusk_plus_18)
 df_18_p = df_18_p.assign(PLUS_B_Perp=b_perp_plus_18)
-df_18_p.to_csv(f'{root_folder}visit_18_times_plus_error_{error}_new.csv',index=False)
+df_18_p = df_18_p.assign(PLUS_Bx=bx_plus_18)
+df_18_p = df_18_p.assign(PLUS_By=by_plus_18)
+df_18_p = df_18_p.assign(PLUS_Bz=bz_plus_18)
+df_18_p.to_csv(f'{root_folder}visit_18_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_18_m = df_18_m.assign(MINUS_Big_DF_Index=idx_minus_18)
 df_18_m = df_18_m.assign(MINUS_Ionosphere_Time=iono_time_minus_18)
 df_18_m = df_18_m.assign(MINUS_Pressure=pressure_minus_18)
 df_18_m = df_18_m.assign(MINUS_Clock_Angle=clock_minus_18)
-df_18_m = df_18_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_18)
 df_18_m = df_18_m.assign(MINUS_LL_rec_V=LL_minus_18)
 df_18_m = df_18_m.assign(MINUS_HL_rec_V_pos=HL_minus_18_pos)
 df_18_m = df_18_m.assign(MINUS_HL_rec_V_neg=HL_minus_18_neg)
+df_18_m = df_18_m.assign(MINUS_Gershman_rec=gersh_minus_18)
+df_18_m = df_18_m.assign(MINUS_KH=KH_minus_18)
+df_18_m = df_18_m.assign(MINUS_KH_dawn=KH_dawn_minus_18)
+df_18_m = df_18_m.assign(MINUS_KH_dusk=KH_dusk_minus_18)
 df_18_m = df_18_m.assign(MINUS_B_Perp=b_perp_minus_18)
-df_18_m.to_csv(f'{root_folder}visit_18_times_minus_error_{error}_new.csv',index=False)
+df_18_m = df_18_m.assign(MINUS_Bx=bx_minus_18)
+df_18_m = df_18_m.assign(MINUS_By=by_minus_18)
+df_18_m = df_18_m.assign(MINUS_Bz=bz_minus_18)
+df_18_m.to_csv(f'{root_folder}visit_18_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -1274,11 +1646,18 @@ times_minus_19, idx_minus_19 = between_idxs(minus_error_et,first_19,last_19)
 iono_time_plus_19 = plus_error[idx_plus_19]
 pressure_plus_19 = pressure_array[idx_plus_19]
 clock_plus_19 = clock_angle[idx_plus_19]
-clock_err_plus_19 = clock_angle_err[idx_plus_19]
 LL_plus_19 = LL_rec[idx_plus_19]
 HL_plus_19_pos = HL_rec_pos[idx_plus_19] 
 HL_plus_19_neg = HL_rec_neg[idx_plus_19]
+gersh_plus_19 = gersh[idx_plus_19]
+KH_plus_19 = KH[idx_plus_19]
+KH_dawn_plus_19 = KH_dawn[idx_plus_19]
+KH_dusk_plus_19 = KH_dusk[idx_plus_19]
 b_perp_plus_19 = b_perp[idx_plus_19]
+
+bx_plus_19 = Bx[idx_plus_19]
+by_plus_19 = By[idx_plus_19]
+bz_plus_19 = Bz[idx_plus_19]
 
 
 # --------- - % error ------------
@@ -1286,12 +1665,18 @@ b_perp_plus_19 = b_perp[idx_plus_19]
 iono_time_minus_19 = minus_error[idx_minus_19]
 pressure_minus_19  = pressure_array[idx_minus_19]
 clock_minus_19 = clock_angle[idx_minus_19]
-clock_err_minus_19 = clock_angle_err[idx_minus_19]
 LL_minus_19 = LL_rec[idx_minus_19]
 HL_minus_19_pos = HL_rec_pos[idx_minus_19]
 HL_minus_19_neg = HL_rec_neg[idx_minus_19]
+gersh_minus_19 = gersh[idx_minus_19]
+KH_minus_19 = KH[idx_minus_19]
+KH_dawn_minus_19 = KH_dawn[idx_minus_19]
+KH_dusk_minus_19 = KH_dusk[idx_minus_19]
 b_perp_minus_19 = b_perp[idx_minus_19]
 
+bx_minus_19 = Bx[idx_minus_19]
+by_minus_19 = By[idx_minus_19]
+bz_minus_19 = Bz[idx_minus_19]
 
 
 # -------- dataframe -----------
@@ -1304,24 +1689,36 @@ df_19_p = df_19_p.assign(PLUS_Big_DF_Index=idx_plus_19)
 df_19_p = df_19_p.assign(PLUS_Ionosphere_Time=iono_time_plus_19)
 df_19_p = df_19_p.assign(PLUS_Pressure=pressure_plus_19)
 df_19_p = df_19_p.assign(PLUS_Clock_Angle=clock_plus_19)
-df_19_p = df_19_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_19)
 df_19_p = df_19_p.assign(PLUS_LL_rec_V=LL_plus_19)
 df_19_p = df_19_p.assign(PLUS_HL_rec_V_pos=HL_plus_19_pos)
 df_19_p = df_19_p.assign(PLUS_HL_rec_V_neg=HL_plus_19_neg)
+df_19_p = df_19_p.assign(PLUS_Gershman_rec=gersh_plus_19)
+df_19_p = df_19_p.assign(PLUS_KH=KH_plus_19)
+df_19_p = df_19_p.assign(PLUS_KH_dawn=KH_dawn_plus_19)
+df_19_p = df_19_p.assign(PLUS_KH_dusk=KH_dusk_plus_19)
 df_19_p = df_19_p.assign(PLUS_B_Perp=b_perp_plus_19)
-df_19_p.to_csv(f'{root_folder}visit_19_times_plus_error_{error}_new.csv',index=False)
+df_19_p = df_19_p.assign(PLUS_Bx=bx_plus_19)
+df_19_p = df_19_p.assign(PLUS_By=by_plus_19)
+df_19_p = df_19_p.assign(PLUS_Bz=bz_plus_19)
+df_19_p.to_csv(f'{root_folder}visit_19_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_19_m = df_19_m.assign(MINUS_Big_DF_Index=idx_minus_19)
 df_19_m = df_19_m.assign(MINUS_Ionosphere_Time=iono_time_minus_19)
 df_19_m = df_19_m.assign(MINUS_Pressure=pressure_minus_19)
 df_19_m = df_19_m.assign(MINUS_Clock_Angle=clock_minus_19)
-df_19_m = df_19_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_19)
 df_19_m = df_19_m.assign(MINUS_LL_rec_V=LL_minus_19)
 df_19_m = df_19_m.assign(MINUS_HL_rec_V_pos=HL_minus_19_pos)
 df_19_m = df_19_m.assign(MINUS_HL_rec_V_neg=HL_minus_19_neg)
+df_19_m = df_19_m.assign(MINUS_Gershman_rec=gersh_minus_19)
+df_19_m = df_19_m.assign(MINUS_KH=KH_minus_19)
+df_19_m = df_19_m.assign(MINUS_KH_dawn=KH_dawn_minus_19)
+df_19_m = df_19_m.assign(MINUS_KH_dusk=KH_dusk_minus_19)
 df_19_m = df_19_m.assign(MINUS_B_Perp=b_perp_minus_19)
-df_19_m.to_csv(f'{root_folder}visit_19_times_minus_error_{error}_new.csv',index=False)
+df_19_m = df_19_m.assign(MINUS_Bx=bx_minus_19)
+df_19_m = df_19_m.assign(MINUS_By=by_minus_19)
+df_19_m = df_19_m.assign(MINUS_Bz=bz_minus_19)
+df_19_m.to_csv(f'{root_folder}visit_19_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -1347,11 +1744,18 @@ times_minus_20, idx_minus_20 = between_idxs(minus_error_et,first_20,last_20)
 iono_time_plus_20 = plus_error[idx_plus_20]
 pressure_plus_20 = pressure_array[idx_plus_20]
 clock_plus_20 = clock_angle[idx_plus_20]
-clock_err_plus_20 = clock_angle_err[idx_plus_20]
 LL_plus_20 = LL_rec[idx_plus_20]
 HL_plus_20_pos = HL_rec_pos[idx_plus_20] 
 HL_plus_20_neg = HL_rec_neg[idx_plus_20]
+gersh_plus_20 = gersh[idx_plus_20]
+KH_plus_20 = KH[idx_plus_20]
+KH_dawn_plus_20 = KH_dawn[idx_plus_20]
+KH_dusk_plus_20 = KH_dusk[idx_plus_20]
 b_perp_plus_20 = b_perp[idx_plus_20]
+
+bx_plus_20 = Bx[idx_plus_20]
+by_plus_20 = By[idx_plus_20]
+bz_plus_20 = Bz[idx_plus_20]
 
 
 # --------- - % error ------------
@@ -1359,12 +1763,18 @@ b_perp_plus_20 = b_perp[idx_plus_20]
 iono_time_minus_20 = minus_error[idx_minus_20]
 pressure_minus_20 = pressure_array[idx_minus_20]
 clock_minus_20 = clock_angle[idx_minus_20]
-clock_err_minus_20 = clock_angle_err[idx_minus_20]
 LL_minus_20 = LL_rec[idx_minus_20]
 HL_minus_20_pos = HL_rec_pos[idx_minus_20]
 HL_minus_20_neg = HL_rec_neg[idx_minus_20]
+gersh_minus_20 = gersh[idx_minus_20]
+KH_minus_20 = KH[idx_minus_20]
+KH_dawn_minus_20 = KH_dawn[idx_minus_20]
+KH_dusk_minus_20 = KH_dusk[idx_minus_20]
 b_perp_minus_20 = b_perp[idx_minus_20]
 
+bx_minus_20 = Bx[idx_minus_20]
+by_minus_20 = By[idx_minus_20]
+bz_minus_20 = Bz[idx_minus_20]
 
 
 # -------- dataframe -----------
@@ -1377,24 +1787,36 @@ df_20_p = df_20_p.assign(PLUS_Big_DF_Index=idx_plus_20)
 df_20_p = df_20_p.assign(PLUS_Ionosphere_Time=iono_time_plus_20)
 df_20_p = df_20_p.assign(PLUS_Pressure=pressure_plus_20)
 df_20_p = df_20_p.assign(PLUS_Clock_Angle=clock_plus_20)
-df_20_p = df_20_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_20)
 df_20_p = df_20_p.assign(PLUS_LL_rec_V=LL_plus_20)
 df_20_p = df_20_p.assign(PLUS_HL_rec_V_pos=HL_plus_20_pos)
 df_20_p = df_20_p.assign(PLUS_HL_rec_V_neg=HL_plus_20_neg)
+df_20_p = df_20_p.assign(PLUS_Gershman_rec=gersh_plus_20)
+df_20_p = df_20_p.assign(PLUS_KH=KH_plus_20)
+df_20_p = df_20_p.assign(PLUS_KH_dawn=KH_dawn_plus_20)
+df_20_p = df_20_p.assign(PLUS_KH_dusk=KH_dusk_plus_20)
 df_20_p = df_20_p.assign(PLUS_B_Perp=b_perp_plus_20)
-df_20_p.to_csv(f'{root_folder}visit_20_times_plus_error_{error}_new.csv',index=False)
+df_20_p = df_20_p.assign(PLUS_Bx=bx_plus_20)
+df_20_p = df_20_p.assign(PLUS_By=by_plus_20)
+df_20_p = df_20_p.assign(PLUS_Bz=bz_plus_20)
+df_20_p.to_csv(f'{root_folder}visit_20_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_20_m = df_20_m.assign(MINUS_Big_DF_Index=idx_minus_20)
 df_20_m = df_20_m.assign(MINUS_Ionosphere_Time=iono_time_minus_20)
 df_20_m = df_20_m.assign(MINUS_Pressure=pressure_minus_20)
 df_20_m = df_20_m.assign(MINUS_Clock_Angle=clock_minus_20)
-df_20_m = df_20_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_20)
 df_20_m = df_20_m.assign(MINUS_LL_rec_V=LL_minus_20)
 df_20_m = df_20_m.assign(MINUS_HL_rec_V_pos=HL_minus_20_pos)
 df_20_m = df_20_m.assign(MINUS_HL_rec_V_neg=HL_minus_20_neg)
+df_20_m = df_20_m.assign(MINUS_Gershman_rec=gersh_minus_20)
+df_20_m = df_20_m.assign(MINUS_KH=KH_minus_20)
+df_20_m = df_20_m.assign(MINUS_KH_dawn=KH_dawn_minus_20)
+df_20_m = df_20_m.assign(MINUS_KH_dusk=KH_dusk_minus_20)
 df_20_m = df_20_m.assign(MINUS_B_Perp=b_perp_minus_20)
-df_20_m.to_csv(f'{root_folder}visit_20_times_minus_error_{error}_new.csv',index=False)
+df_20_m = df_20_m.assign(MINUS_Bx=bx_minus_20)
+df_20_m = df_20_m.assign(MINUS_By=by_minus_20)
+df_20_m = df_20_m.assign(MINUS_Bz=bz_minus_20)
+df_20_m.to_csv(f'{root_folder}visit_20_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -1420,11 +1842,18 @@ times_minus_21, idx_minus_21 = between_idxs(minus_error_et,first_21,last_21)
 iono_time_plus_21 = plus_error[idx_plus_21]
 pressure_plus_21 = pressure_array[idx_plus_21]
 clock_plus_21 = clock_angle[idx_plus_21]
-clock_err_plus_21 = clock_angle_err[idx_plus_21]
 LL_plus_21 = LL_rec[idx_plus_21]
 HL_plus_21_pos = HL_rec_pos[idx_plus_21] 
 HL_plus_21_neg = HL_rec_neg[idx_plus_21]
+gersh_plus_21 = gersh[idx_plus_21]
+KH_plus_21 = KH[idx_plus_21]
+KH_dawn_plus_21 = KH_dawn[idx_plus_21]
+KH_dusk_plus_21 = KH_dusk[idx_plus_21]
 b_perp_plus_21 = b_perp[idx_plus_21]
+
+bx_plus_21 = Bx[idx_plus_21]
+by_plus_21 = By[idx_plus_21]
+bz_plus_21 = Bz[idx_plus_21]
 
 
 # --------- - % error ------------
@@ -1432,11 +1861,18 @@ b_perp_plus_21 = b_perp[idx_plus_21]
 iono_time_minus_21 = minus_error[idx_minus_21]
 pressure_minus_21 = pressure_array[idx_minus_21]
 clock_minus_21 = clock_angle[idx_minus_21]
-clock_err_minus_21 = clock_angle_err[idx_minus_21]
 LL_minus_21 = LL_rec[idx_minus_21]
 HL_minus_21_pos = HL_rec_pos[idx_minus_21]
 HL_minus_21_neg = HL_rec_neg[idx_minus_21]
+gersh_minus_21 = gersh[idx_minus_21]
+KH_minus_21 = KH[idx_minus_21]
+KH_dawn_minus_21 = KH_dawn[idx_minus_21]
+KH_dusk_minus_21 = KH_dusk[idx_minus_21]
 b_perp_minus_21 = b_perp[idx_minus_21]
+
+bx_minus_21 = Bx[idx_minus_21]
+by_minus_21 = By[idx_minus_21]
+bz_minus_21 = Bz[idx_minus_21]
 
 
 # -------- dataframe -----------
@@ -1449,24 +1885,36 @@ df_21_p = df_21_p.assign(PLUS_Big_DF_Index=idx_plus_21)
 df_21_p = df_21_p.assign(PLUS_Ionosphere_Time=iono_time_plus_21)
 df_21_p = df_21_p.assign(PLUS_Pressure=pressure_plus_21)
 df_21_p = df_21_p.assign(PLUS_Clock_Angle=clock_plus_21)
-df_21_p = df_21_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_21)
 df_21_p = df_21_p.assign(PLUS_LL_rec_V=LL_plus_21)
 df_21_p = df_21_p.assign(PLUS_HL_rec_V_pos=HL_plus_21_pos)
 df_21_p = df_21_p.assign(PLUS_HL_rec_V_neg=HL_plus_21_neg)
+df_21_p = df_21_p.assign(PLUS_Gershman_rec=gersh_plus_21)
+df_21_p = df_21_p.assign(PLUS_KH=KH_plus_21)
+df_21_p = df_21_p.assign(PLUS_KH_dawn=KH_dawn_plus_21)
+df_21_p = df_21_p.assign(PLUS_KH_dusk=KH_dusk_plus_21)
 df_21_p = df_21_p.assign(PLUS_B_Perp=b_perp_plus_21)
-df_21_p.to_csv(f'{root_folder}visit_21_times_plus_error_{error}_new.csv',index=False)
+df_21_p = df_21_p.assign(PLUS_Bx=bx_plus_21)
+df_21_p = df_21_p.assign(PLUS_By=by_plus_21)
+df_21_p = df_21_p.assign(PLUS_Bz=bz_plus_21)
+df_21_p.to_csv(f'{root_folder}visit_21_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_21_m = df_21_m.assign(MINUS_Big_DF_Index=idx_minus_21)
 df_21_m = df_21_m.assign(MINUS_Ionosphere_Time=iono_time_minus_21)
 df_21_m = df_21_m.assign(MINUS_Pressure=pressure_minus_21)
 df_21_m = df_21_m.assign(MINUS_Clock_Angle=clock_minus_21)
-df_21_m = df_21_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_21)
 df_21_m = df_21_m.assign(MINUS_LL_rec_V=LL_minus_21)
 df_21_m = df_21_m.assign(MINUS_HL_rec_V_pos=HL_minus_21_pos)
 df_21_m = df_21_m.assign(MINUS_HL_rec_V_neg=HL_minus_21_neg)
+df_21_m = df_21_m.assign(MINUS_Gershman_rec=gersh_minus_21)
+df_21_m = df_21_m.assign(MINUS_KH=KH_minus_21)
+df_21_m = df_21_m.assign(MINUS_KH_dawn=KH_dawn_minus_21)
+df_21_m = df_21_m.assign(MINUS_KH_dusk=KH_dusk_minus_21)
 df_21_m = df_21_m.assign(MINUS_B_Perp=b_perp_minus_21)
-df_21_m.to_csv(f'{root_folder}visit_21_times_minus_error_{error}_new.csv',index=False)
+df_21_m = df_21_m.assign(MINUS_Bx=bx_minus_21)
+df_21_m = df_21_m.assign(MINUS_By=by_minus_21)
+df_21_m = df_21_m.assign(MINUS_Bz=bz_minus_21)
+df_21_m.to_csv(f'{root_folder}visit_21_times_minus_error_{error}_aug.csv',index=False)
 
 
 
@@ -1493,12 +1941,18 @@ times_minus_24, idx_minus_24 = between_idxs(minus_error_et,first_24,last_24)
 iono_time_plus_24 = plus_error[idx_plus_24]
 pressure_plus_24 = pressure_array[idx_plus_24]
 clock_plus_24 = clock_angle[idx_plus_24]
-clock_err_plus_24 = clock_angle_err[idx_plus_24]
 LL_plus_24 = LL_rec[idx_plus_24]
 HL_plus_24_pos = HL_rec_pos[idx_plus_24] 
 HL_plus_24_neg = HL_rec_neg[idx_plus_24]
+gersh_plus_24 = gersh[idx_plus_24]
+KH_plus_24 = KH[idx_plus_24]
+KH_dawn_plus_24 = KH_dawn[idx_plus_24]
+KH_dusk_plus_24 = KH_dusk[idx_plus_24]
 b_perp_plus_24 = b_perp[idx_plus_24]
 
+bx_plus_24 = Bx[idx_plus_24]
+by_plus_24 = By[idx_plus_24]
+bz_plus_24 = Bz[idx_plus_24]
 
 
 # --------- - % error ------------
@@ -1506,11 +1960,18 @@ b_perp_plus_24 = b_perp[idx_plus_24]
 iono_time_minus_24 = minus_error[idx_minus_24]
 pressure_minus_24 = pressure_array[idx_minus_24]
 clock_minus_24 = clock_angle[idx_minus_24]
-clock_err_minus_24 = clock_angle_err[idx_minus_24]
 LL_minus_24 = LL_rec[idx_minus_24]
 HL_minus_24_pos = HL_rec_pos[idx_minus_24]
 HL_minus_24_neg = HL_rec_neg[idx_minus_24]
+gersh_minus_24 = gersh[idx_minus_24]
+KH_minus_24 = KH[idx_minus_24]
+KH_dawn_minus_24 = KH_dawn[idx_minus_24]
+KH_dusk_minus_24 = KH_dusk[idx_minus_24]
 b_perp_minus_24 = b_perp[idx_minus_24]
+
+bx_minus_24 = Bx[idx_minus_24]
+by_minus_24 = By[idx_minus_24]
+bz_minus_24 = Bz[idx_minus_24]
 
 
 # -------- dataframe -----------
@@ -1523,24 +1984,36 @@ df_24_p = df_24_p.assign(PLUS_Big_DF_Index=idx_plus_24)
 df_24_p = df_24_p.assign(PLUS_Ionosphere_Time=iono_time_plus_24)
 df_24_p = df_24_p.assign(PLUS_Pressure=pressure_plus_24)
 df_24_p = df_24_p.assign(PLUS_Clock_Angle=clock_plus_24)
-df_24_p = df_24_p.assign(PLUS_Clock_Angle_Error=clock_err_plus_24)
 df_24_p = df_24_p.assign(PLUS_LL_rec_V=LL_plus_24)
 df_24_p = df_24_p.assign(PLUS_HL_rec_V_pos=HL_plus_24_pos)
 df_24_p = df_24_p.assign(PLUS_HL_rec_V_neg=HL_plus_24_neg)
+df_24_p = df_24_p.assign(PLUS_Gershman_rec=gersh_plus_24)
+df_24_p = df_24_p.assign(PLUS_KH=KH_plus_24)
+df_24_p = df_24_p.assign(PLUS_KH_dawn=KH_dawn_plus_24)
+df_24_p = df_24_p.assign(PLUS_KH_dusk=KH_dusk_plus_24)
 df_24_p = df_24_p.assign(PLUS_B_Perp=b_perp_plus_24)
-df_24_p.to_csv(f'{root_folder}visit_24_times_plus_error_{error}_new.csv',index=False)
+df_24_p = df_24_p.assign(PLUS_Bx=bx_plus_24)
+df_24_p = df_24_p.assign(PLUS_By=by_plus_24)
+df_24_p = df_24_p.assign(PLUS_Bz=bz_plus_24)
+df_24_p.to_csv(f'{root_folder}visit_24_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_24_m = df_24_m.assign(MINUS_Big_DF_Index=idx_minus_24)
 df_24_m = df_24_m.assign(MINUS_Ionosphere_Time=iono_time_minus_24)
 df_24_m = df_24_m.assign(MINUS_Pressure=pressure_minus_24)
 df_24_m = df_24_m.assign(MINUS_Clock_Angle=clock_minus_24)
-df_24_m = df_24_m.assign(MINUS_Clock_Angle_Error=clock_err_minus_24)
 df_24_m = df_24_m.assign(MINUS_LL_rec_V=LL_minus_24)
 df_24_m = df_24_m.assign(MINUS_HL_rec_V_pos=HL_minus_24_pos)
 df_24_m = df_24_m.assign(MINUS_HL_rec_V_neg=HL_minus_24_neg)
+df_24_m = df_24_m.assign(MINUS_Gershman_rec=gersh_minus_24)
+df_24_m = df_24_m.assign(MINUS_KH=KH_minus_24)
+df_24_m = df_24_m.assign(MINUS_KH_dawn=KH_dawn_minus_24)
+df_24_m = df_24_m.assign(MINUS_KH_dusk=KH_dusk_minus_24)
 df_24_m = df_24_m.assign(MINUS_B_Perp=b_perp_minus_24)
-df_24_m.to_csv(f'{root_folder}visit_24_times_minus_error_{error}_new.csv',index=False)
+df_24_m = df_24_m.assign(MINUS_Bx=bx_minus_24)
+df_24_m = df_24_m.assign(MINUS_By=by_minus_24)
+df_24_m = df_24_m.assign(MINUS_Bz=bz_minus_24)
+df_24_m.to_csv(f'{root_folder}visit_24_times_minus_error_{error}_aug.csv',index=False)
 
 # --------------- doy 155 -----------------
 
@@ -1570,7 +2043,15 @@ clock_plus_25 = clock_angle_155[idx_plus_25]
 LL_plus_25 = LL_rec_155[idx_plus_25]
 HL_plus_25_pos = HL_rec_pos_155[idx_plus_25] 
 HL_plus_25_neg = HL_rec_neg_155[idx_plus_25]
+gersh_plus_25 = gersh_155[idx_plus_25]
+KH_plus_25 = KH_155[idx_plus_25]
+KH_dawn_plus_25 = KH_dawn_155[idx_plus_25]
+KH_dusk_plus_25 = KH_dusk_155[idx_plus_25]
 b_perp_plus_25 = b_perp_155[idx_plus_25]
+
+bx_plus_25 = Bx_155[idx_plus_25]
+by_plus_25 = By_155[idx_plus_25]
+bz_plus_25 = Bz_155[idx_plus_25]
 
 
 # --------- - % error ------------
@@ -1581,7 +2062,15 @@ clock_minus_25 = clock_angle_155[idx_minus_25]
 LL_minus_25 = LL_rec_155[idx_minus_25]
 HL_minus_25_pos = HL_rec_pos_155[idx_minus_25]
 HL_minus_25_neg = HL_rec_neg_155[idx_minus_25]
+gersh_minus_25 = gersh_155[idx_minus_25]
+KH_minus_25 = KH_155[idx_minus_25]
+KH_dawn_minus_25 = KH_dawn_155[idx_minus_25]
+KH_dusk_minus_25 = KH_dusk_155[idx_minus_25]
 b_perp_minus_25 = b_perp_155[idx_minus_25]
+
+bx_minus_25 = Bx_155[idx_minus_25]
+by_minus_25 = By_155[idx_minus_25]
+bz_minus_25 = Bz_155[idx_minus_25]
 
 
 # -------- dataframe -----------
@@ -1597,8 +2086,15 @@ df_25_p = df_25_p.assign(PLUS_Clock_Angle=clock_plus_25)
 df_25_p = df_25_p.assign(PLUS_LL_rec_V=LL_plus_25)
 df_25_p = df_25_p.assign(PLUS_HL_rec_V_pos=HL_plus_25_pos)
 df_25_p = df_25_p.assign(PLUS_HL_rec_V_neg=HL_plus_25_neg)
+df_25_p = df_25_p.assign(PLUS_Gershman_rec=gersh_plus_25)
+df_25_p = df_25_p.assign(PLUS_KH=KH_plus_25)
+df_25_p = df_25_p.assign(PLUS_KH_dawn=KH_dawn_plus_25)
+df_25_p = df_25_p.assign(PLUS_KH_dusk=KH_dusk_plus_25)
 df_25_p = df_25_p.assign(PLUS_B_Perp=b_perp_plus_25)
-df_25_p.to_csv(f'{root_folder}visit_25_times_plus_error_{error}_new.csv',index=False)
+df_25_p = df_25_p.assign(PLUS_Bx=bx_plus_25)
+df_25_p = df_25_p.assign(PLUS_By=by_plus_25)
+df_25_p = df_25_p.assign(PLUS_Bz=bz_plus_25)
+df_25_p.to_csv(f'{root_folder}visit_25_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_25_m = df_25_m.assign(MINUS_Big_DF_Index=idx_minus_25)
@@ -1608,8 +2104,15 @@ df_25_m = df_25_m.assign(MINUS_Clock_Angle=clock_minus_25)
 df_25_m = df_25_m.assign(MINUS_LL_rec_V=LL_minus_25)
 df_25_m = df_25_m.assign(MINUS_HL_rec_V_pos=HL_minus_25_pos)
 df_25_m = df_25_m.assign(MINUS_HL_rec_V_neg=HL_minus_25_neg)
+df_25_m = df_25_m.assign(MINUS_Gershman_rec=gersh_minus_25)
+df_25_m = df_25_m.assign(MINUS_KH=KH_minus_25)
+df_25_m = df_25_m.assign(MINUS_KH_dawn=KH_dawn_minus_25)
+df_25_m = df_25_m.assign(MINUS_KH_dusk=KH_dusk_minus_25)
 df_25_m = df_25_m.assign(MINUS_B_Perp=b_perp_minus_25)
-df_25_m.to_csv(f'{root_folder}visit_25_times_minus_error_{error}_new.csv',index=False)
+df_25_m = df_25_m.assign(MINUS_Bx=bx_minus_25)
+df_25_m = df_25_m.assign(MINUS_By=by_minus_25)
+df_25_m = df_25_m.assign(MINUS_Bz=bz_minus_25)
+df_25_m.to_csv(f'{root_folder}visit_25_times_minus_error_{error}_aug.csv',index=False)
 
 
 # ------------ doys 156 + -----------
@@ -1640,7 +2143,15 @@ clock_plus_26 = clock_angle_156_plus[idx_plus_26]
 LL_plus_26 = LL_rec_156_plus[idx_plus_26]
 HL_plus_26_pos = HL_rec_pos_156_plus[idx_plus_26] 
 HL_plus_26_neg = HL_rec_neg_156_plus[idx_plus_26]
+gersh_plus_26 = gersh_156_plus[idx_plus_26]
+KH_plus_26 = KH_156_plus[idx_plus_26]
+KH_dawn_plus_26 = KH_dawn_156_plus[idx_plus_26]
+KH_dusk_plus_26 = KH_dusk_156_plus[idx_plus_26]
 b_perp_plus_26 = b_perp_156_plus[idx_plus_26]
+
+bx_plus_26 = Bx_156_plus[idx_plus_26]
+by_plus_26 = By_156_plus[idx_plus_26]
+bz_plus_26 = Bz_156_plus[idx_plus_26]
 
 
 # --------- - % error ------------
@@ -1651,8 +2162,15 @@ clock_minus_26 = clock_angle_156_plus[idx_minus_26]
 LL_minus_26 = LL_rec_156_plus[idx_minus_26]
 HL_minus_26_pos = HL_rec_pos_156_plus[idx_minus_26]
 HL_minus_26_neg = HL_rec_neg_156_plus[idx_minus_26]
+gersh_minus_26 = gersh_156_plus[idx_minus_26]
+KH_minus_26 = KH_156_plus[idx_minus_26]
+KH_dawn_minus_26 = KH_dawn_156_plus[idx_minus_26]
+KH_dusk_minus_26 = KH_dusk_156_plus[idx_minus_26]
 b_perp_minus_26 = b_perp_156_plus[idx_minus_26]
 
+bx_minus_26 = Bx_156_plus[idx_minus_26]
+by_minus_26 = By_156_plus[idx_minus_26]
+bz_minus_26 = Bz_156_plus[idx_minus_26]
 
 # -------- dataframe -----------
 
@@ -1667,8 +2185,15 @@ df_26_p = df_26_p.assign(PLUS_Clock_Angle=clock_plus_26)
 df_26_p = df_26_p.assign(PLUS_LL_rec_V=LL_plus_26)
 df_26_p = df_26_p.assign(PLUS_HL_rec_V_pos=HL_plus_26_pos)
 df_26_p = df_26_p.assign(PLUS_HL_rec_V_neg=HL_plus_26_neg)
+df_26_p = df_26_p.assign(PLUS_Gershman_rec=gersh_plus_26)
+df_26_p = df_26_p.assign(PLUS_KH=KH_plus_26)
+df_26_p = df_26_p.assign(PLUS_KH_dawn=KH_dawn_plus_26)
+df_26_p = df_26_p.assign(PLUS_KH_dusk=KH_dusk_plus_26)
 df_26_p = df_26_p.assign(PLUS_B_Perp=b_perp_plus_26)
-df_26_p.to_csv(f'{root_folder}visit_26_times_plus_error_{error}_new.csv',index=False)
+df_26_p = df_26_p.assign(PLUS_Bx=bx_plus_26)
+df_26_p = df_26_p.assign(PLUS_By=by_plus_26)
+df_26_p = df_26_p.assign(PLUS_Bz=bz_plus_26)
+df_26_p.to_csv(f'{root_folder}visit_26_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_26_m = df_26_m.assign(MINUS_Big_DF_Index=idx_minus_26)
@@ -1678,8 +2203,15 @@ df_26_m = df_26_m.assign(MINUS_Clock_Angle=clock_minus_26)
 df_26_m = df_26_m.assign(MINUS_LL_rec_V=LL_minus_26)
 df_26_m = df_26_m.assign(MINUS_HL_rec_V_pos=HL_minus_26_pos)
 df_26_m = df_26_m.assign(MINUS_HL_rec_V_neg=HL_minus_26_neg)
+df_26_m = df_26_m.assign(MINUS_Gershman_rec=gersh_minus_26)
+df_26_m = df_26_m.assign(MINUS_KH=KH_minus_26)
+df_26_m = df_26_m.assign(MINUS_KH_dawn=KH_dawn_minus_26)
+df_26_m = df_26_m.assign(MINUS_KH_dusk=KH_dusk_minus_26)
 df_26_m = df_26_m.assign(MINUS_B_Perp=b_perp_minus_26)
-df_26_m.to_csv(f'{root_folder}visit_26_times_minus_error_{error}_new.csv',index=False)
+df_26_m = df_26_m.assign(MINUS_Bx=bx_minus_26)
+df_26_m = df_26_m.assign(MINUS_By=by_minus_26)
+df_26_m = df_26_m.assign(MINUS_Bz=bz_minus_26)
+df_26_m.to_csv(f'{root_folder}visit_26_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -1708,7 +2240,15 @@ clock_plus_27 = clock_angle_156_plus[idx_plus_27]
 LL_plus_27 = LL_rec_156_plus[idx_plus_27]
 HL_plus_27_pos = HL_rec_pos_156_plus[idx_plus_27] 
 HL_plus_27_neg = HL_rec_neg_156_plus[idx_plus_27]
+gersh_plus_27 = gersh_156_plus[idx_plus_27]
+KH_plus_27 = KH_156_plus[idx_plus_27]
+KH_dawn_plus_27 = KH_dawn_156_plus[idx_plus_27]
+KH_dusk_plus_27 = KH_dusk_156_plus[idx_plus_27]
 b_perp_plus_27 = b_perp_156_plus[idx_plus_27]
+
+bx_plus_27 = Bx[idx_plus_27]
+by_plus_27 = By[idx_plus_27]
+bz_plus_27 = Bz[idx_plus_27]
 
 
 # --------- - % error ------------
@@ -1719,7 +2259,15 @@ clock_minus_27 = clock_angle_156_plus[idx_minus_27]
 LL_minus_27 = LL_rec_156_plus[idx_minus_27]
 HL_minus_27_pos = HL_rec_pos_156_plus[idx_minus_27]
 HL_minus_27_neg = HL_rec_neg_156_plus[idx_minus_27]
+gersh_minus_27 = gersh_156_plus[idx_minus_27]
+KH_minus_27 = KH_156_plus[idx_minus_27]
+KH_dawn_minus_27 = KH_dawn_156_plus[idx_minus_27]
+KH_dusk_minus_27 = KH_dusk_156_plus[idx_minus_27]
 b_perp_minus_27 = b_perp_156_plus[idx_minus_27]
+
+bx_minus_27 = Bx[idx_minus_27]
+by_minus_27 = By[idx_minus_27]
+bz_minus_27 = Bz[idx_minus_27]
 
 
 # -------- dataframe -----------
@@ -1735,8 +2283,15 @@ df_27_p = df_27_p.assign(PLUS_Clock_Angle=clock_plus_27)
 df_27_p = df_27_p.assign(PLUS_LL_rec_V=LL_plus_27)
 df_27_p = df_27_p.assign(PLUS_HL_rec_V_pos=HL_plus_27_pos)
 df_27_p = df_27_p.assign(PLUS_HL_rec_V_neg=HL_plus_27_neg)
+df_27_p = df_27_p.assign(PLUS_Gershman_rec=gersh_plus_27)
+df_27_p = df_27_p.assign(PLUS_KH=KH_plus_27)
+df_27_p = df_27_p.assign(PLUS_KH_dawn=KH_dawn_plus_27)
+df_27_p = df_27_p.assign(PLUS_KH_dusk=KH_dusk_plus_27)
 df_27_p = df_27_p.assign(PLUS_B_Perp=b_perp_plus_27)
-df_27_p.to_csv(f'{root_folder}visit_27_times_plus_error_{error}_new.csv',index=False)
+df_27_p = df_27_p.assign(PLUS_Bx=bx_plus_27)
+df_27_p = df_27_p.assign(PLUS_By=by_plus_27)
+df_27_p = df_27_p.assign(PLUS_Bz=bz_plus_27)
+df_27_p.to_csv(f'{root_folder}visit_27_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_27_m = df_27_m.assign(MINUS_Big_DF_Index=idx_minus_27)
@@ -1746,8 +2301,15 @@ df_27_m = df_27_m.assign(MINUS_Clock_Angle=clock_minus_27)
 df_27_m = df_27_m.assign(MINUS_LL_rec_V=LL_minus_27)
 df_27_m = df_27_m.assign(MINUS_HL_rec_V_pos=HL_minus_27_pos)
 df_27_m = df_27_m.assign(MINUS_HL_rec_V_neg=HL_minus_27_neg)
+df_27_m = df_27_m.assign(MINUS_Gershman_rec=gersh_minus_27)
+df_27_m = df_27_m.assign(MINUS_KH=KH_minus_27)
+df_27_m = df_27_m.assign(MINUS_KH_dawn=KH_dawn_minus_27)
+df_27_m = df_27_m.assign(MINUS_KH_dusk=KH_dusk_minus_27)
 df_27_m = df_27_m.assign(MINUS_B_Perp=b_perp_minus_27)
-df_27_m.to_csv(f'{root_folder}visit_27_times_minus_error_{error}_new.csv',index=False)
+df_27_m = df_27_m.assign(MINUS_Bx=bx_minus_27)
+df_27_m = df_27_m.assign(MINUS_By=by_minus_27)
+df_27_m = df_27_m.assign(MINUS_Bz=bz_minus_27)
+df_27_m.to_csv(f'{root_folder}visit_27_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -1776,7 +2338,15 @@ clock_plus_28 = clock_angle_156_plus[idx_plus_28]
 LL_plus_28 = LL_rec_156_plus[idx_plus_28]
 HL_plus_28_pos = HL_rec_pos_156_plus[idx_plus_28] 
 HL_plus_28_neg = HL_rec_neg_156_plus[idx_plus_28]
+gersh_plus_28 = gersh_156_plus[idx_plus_28]
+KH_plus_28 = KH_156_plus[idx_plus_28]
+KH_dawn_plus_28 = KH_dawn_156_plus[idx_plus_28]
+KH_dusk_plus_28 = KH_dusk_156_plus[idx_plus_28]
 b_perp_plus_28 = b_perp_156_plus[idx_plus_28]
+
+bx_plus_28 = Bx[idx_plus_28]
+by_plus_28 = By[idx_plus_28]
+bz_plus_28 = Bz[idx_plus_28]
 
 
 # --------- - % error ------------
@@ -1787,7 +2357,15 @@ clock_minus_28 = clock_angle_156_plus[idx_minus_28]
 LL_minus_28 = LL_rec_156_plus[idx_minus_28]
 HL_minus_28_pos = HL_rec_pos_156_plus[idx_minus_28]
 HL_minus_28_neg = HL_rec_neg_156_plus[idx_minus_28]
+gersh_minus_28 = gersh_156_plus[idx_minus_28]
+KH_minus_28 = KH_156_plus[idx_minus_28]
+KH_dawn_minus_28 = KH_dawn_156_plus[idx_minus_28]
+KH_dusk_minus_28 = KH_dusk_156_plus[idx_minus_28]
 b_perp_minus_28 = b_perp_156_plus[idx_minus_28]
+
+bx_minus_28 = Bx[idx_minus_28]
+by_minus_28 = By[idx_minus_28]
+bz_minus_28 = Bz[idx_minus_28]
 
 
 # -------- dataframe -----------
@@ -1803,8 +2381,15 @@ df_28_p = df_28_p.assign(PLUS_Clock_Angle=clock_plus_28)
 df_28_p = df_28_p.assign(PLUS_LL_rec_V=LL_plus_28)
 df_28_p = df_28_p.assign(PLUS_HL_rec_V_pos=HL_plus_28_pos)
 df_28_p = df_28_p.assign(PLUS_HL_rec_V_neg=HL_plus_28_neg)
+df_28_p = df_28_p.assign(PLUS_Gershman_rec=gersh_plus_28)
+df_28_p = df_28_p.assign(PLUS_KH=KH_plus_28)
+df_28_p = df_28_p.assign(PLUS_KH_dawn=KH_dawn_plus_28)
+df_28_p = df_28_p.assign(PLUS_KH_dusk=KH_dusk_plus_28)
 df_28_p = df_28_p.assign(PLUS_B_Perp=b_perp_plus_28)
-df_28_p.to_csv(f'{root_folder}visit_28_times_plus_error_{error}_new.csv',index=False)
+df_28_p = df_28_p.assign(PLUS_Bx=bx_plus_28)
+df_28_p = df_28_p.assign(PLUS_By=by_plus_28)
+df_28_p = df_28_p.assign(PLUS_Bz=bz_plus_28)
+df_28_p.to_csv(f'{root_folder}visit_28_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_28_m = df_28_m.assign(MINUS_Big_DF_Index=idx_minus_28)
@@ -1814,8 +2399,15 @@ df_28_m = df_28_m.assign(MINUS_Clock_Angle=clock_minus_28)
 df_28_m = df_28_m.assign(MINUS_LL_rec_V=LL_minus_28)
 df_28_m = df_28_m.assign(MINUS_HL_rec_V_pos=HL_minus_28_pos)
 df_28_m = df_28_m.assign(MINUS_HL_rec_V_neg=HL_minus_28_neg)
+df_28_m = df_28_m.assign(MINUS_Gershman_rec=gersh_minus_28)
+df_28_m = df_28_m.assign(MINUS_KH=KH_minus_28)
+df_28_m = df_28_m.assign(MINUS_KH_dawn=KH_dawn_minus_28)
+df_28_m = df_28_m.assign(MINUS_KH_dusk=KH_dusk_minus_28)
 df_28_m = df_28_m.assign(MINUS_B_Perp=b_perp_minus_28)
-df_28_m.to_csv(f'{root_folder}visit_28_times_minus_error_{error}_new.csv',index=False)
+df_28_m = df_28_m.assign(MINUS_Bx=bx_minus_28)
+df_28_m = df_28_m.assign(MINUS_By=by_minus_28)
+df_28_m = df_28_m.assign(MINUS_Bz=bz_minus_28)
+df_28_m.to_csv(f'{root_folder}visit_28_times_minus_error_{error}_aug.csv',index=False)
 
 
 # ------------- doy 175 and 176 ---------
@@ -1846,7 +2438,15 @@ clock_plus_34 = clock_angle_175[idx_plus_34]
 LL_plus_34 = LL_rec_175[idx_plus_34]
 HL_plus_34_pos = HL_rec_pos_175[idx_plus_34] 
 HL_plus_34_neg = HL_rec_neg_175[idx_plus_34]
+gersh_plus_34 = gersh_175[idx_plus_34]
+KH_plus_34 = KH_175[idx_plus_34]
+KH_dawn_plus_34 = KH_dawn_175[idx_plus_34]
+KH_dusk_plus_34 = KH_dusk_175[idx_plus_34]
 b_perp_plus_34 = b_perp_175[idx_plus_34]
+
+bx_plus_34 = Bx[idx_plus_34]
+by_plus_34 = By[idx_plus_34]
+bz_plus_34 = Bz[idx_plus_34]
 
 
 # --------- - % error ------------
@@ -1857,7 +2457,15 @@ clock_minus_34 = clock_angle_175[idx_minus_34]
 LL_minus_34 = LL_rec_175[idx_minus_34]
 HL_minus_34_pos = HL_rec_pos_175[idx_minus_34]
 HL_minus_34_neg = HL_rec_neg_175[idx_minus_34]
+gersh_minus_34 = gersh_175[idx_minus_34]
+KH_minus_34 = KH_175[idx_minus_34]
+KH_dawn_minus_34 = KH_dawn_175[idx_minus_34]
+KH_dusk_minus_34 = KH_dusk_175[idx_minus_34]
 b_perp_minus_34 = b_perp_175[idx_minus_34]
+
+bx_minus_34 = Bx[idx_minus_34]
+by_minus_34 = By[idx_minus_34]
+bz_minus_34 = Bz[idx_minus_34]
 
 
 # -------- dataframe -----------
@@ -1873,8 +2481,15 @@ df_34_p = df_34_p.assign(PLUS_Clock_Angle=clock_plus_34)
 df_34_p = df_34_p.assign(PLUS_LL_rec_V=LL_plus_34)
 df_34_p = df_34_p.assign(PLUS_HL_rec_V_pos=HL_plus_34_pos)
 df_34_p = df_34_p.assign(PLUS_HL_rec_V_neg=HL_plus_34_neg)
+df_34_p = df_34_p.assign(PLUS_Gershman_rec=gersh_plus_34)
+df_34_p = df_34_p.assign(PLUS_KH=KH_plus_34)
+df_34_p = df_34_p.assign(PLUS_KH_dawn=KH_dawn_plus_34)
+df_34_p = df_34_p.assign(PLUS_KH_dusk=KH_dusk_plus_34)
 df_34_p = df_34_p.assign(PLUS_B_Perp=b_perp_plus_34)
-df_34_p.to_csv(f'{root_folder}visit_34_times_plus_error_{error}_new.csv',index=False)
+df_34_p = df_34_p.assign(PLUS_Bx=bx_plus_34)
+df_34_p = df_34_p.assign(PLUS_By=by_plus_34)
+df_34_p = df_34_p.assign(PLUS_Bz=bz_plus_34)
+df_34_p.to_csv(f'{root_folder}visit_34_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_34_m = df_34_m.assign(MINUS_Big_DF_Index=idx_minus_34)
@@ -1884,8 +2499,15 @@ df_34_m = df_34_m.assign(MINUS_Clock_Angle=clock_minus_34)
 df_34_m = df_34_m.assign(MINUS_LL_rec_V=LL_minus_34)
 df_34_m = df_34_m.assign(MINUS_HL_rec_V_pos=HL_minus_34_pos)
 df_34_m = df_34_m.assign(MINUS_HL_rec_V_neg=HL_minus_34_neg)
+df_34_m = df_34_m.assign(MINUS_Gershman_rec=gersh_minus_34)
+df_34_m = df_34_m.assign(MINUS_KH=KH_minus_34)
+df_34_m = df_34_m.assign(MINUS_KH_dawn=KH_dawn_minus_34)
+df_34_m = df_34_m.assign(MINUS_KH_dusk=KH_dusk_minus_34)
 df_34_m = df_34_m.assign(MINUS_B_Perp=b_perp_minus_34)
-df_34_m.to_csv(f'{root_folder}visit_34_times_minus_error_{error}_new.csv',index=False)
+df_34_m = df_34_m.assign(MINUS_Bx=bx_minus_34)
+df_34_m = df_34_m.assign(MINUS_By=by_minus_34)
+df_34_m = df_34_m.assign(MINUS_Bz=bz_minus_34)
+df_34_m.to_csv(f'{root_folder}visit_34_times_minus_error_{error}_aug.csv',index=False)
 
 
 '''
@@ -1914,7 +2536,15 @@ clock_plus_35 = clock_angle_175[idx_plus_35]
 LL_plus_35 = LL_rec_175[idx_plus_35]
 HL_plus_35_pos = HL_rec_pos_175[idx_plus_35] 
 HL_plus_35_neg = HL_rec_neg_175[idx_plus_35]
+gersh_plus_35 = gersh_175[idx_plus_35]
+KH_plus_35 = KH_175[idx_plus_35]
+KH_dawn_plus_35 = KH_dawn_175[idx_plus_35]
+KH_dusk_plus_35 = KH_dusk_175[idx_plus_35]
 b_perp_plus_35 = b_perp_175[idx_plus_35]
+
+bx_plus_35 = Bx[idx_plus_35]
+by_plus_35 = By[idx_plus_35]
+bz_plus_35 = Bz[idx_plus_35]
 
 
 # --------- - % error ------------
@@ -1925,7 +2555,15 @@ clock_minus_35 = clock_angle_175[idx_minus_35]
 LL_minus_35 = LL_rec_175[idx_minus_35]
 HL_minus_35_pos = HL_rec_pos_175[idx_minus_35]
 HL_minus_35_neg = HL_rec_neg_175[idx_minus_35]
+gersh_minus_35 = gersh_175[idx_minus_35]
+KH_minus_35 = KH_175[idx_minus_35]
+KH_dawn_minus_35 = KH_dawn_175[idx_minus_35]
+KH_dusk_minus_35 = KH_dusk_175[idx_minus_35]
 b_perp_minus_35 = b_perp_175[idx_minus_35]
+
+bx_minus_35 = Bx[idx_minus_35]
+by_minus_35 = By[idx_minus_35]
+bz_minus_35 = Bz[idx_minus_35]
 
 
 # -------- dataframe -----------
@@ -1941,8 +2579,15 @@ df_35_p = df_35_p.assign(PLUS_Clock_Angle=clock_plus_35)
 df_35_p = df_35_p.assign(PLUS_LL_rec_V=LL_plus_35)
 df_35_p = df_35_p.assign(PLUS_HL_rec_V_pos=HL_plus_35_pos)
 df_35_p = df_35_p.assign(PLUS_HL_rec_V_neg=HL_plus_35_neg)
+df_35_p = df_35_p.assign(PLUS_Gershman_rec=gersh_plus_35)
+df_35_p = df_35_p.assign(PLUS_KH=KH_plus_35)
+df_35_p = df_35_p.assign(PLUS_KH_dawn=KH_dawn_plus_35)
+df_35_p = df_35_p.assign(PLUS_KH_dusk=KH_dusk_plus_35)
 df_35_p = df_35_p.assign(PLUS_B_Perp=b_perp_plus_35)
-df_35_p.to_csv(f'{root_folder}visit_35_times_plus_error_{error}_new.csv',index=False)
+df_35_p = df_35_p.assign(PLUS_Bx=bx_plus_35)
+df_35_p = df_35_p.assign(PLUS_By=by_plus_35)
+df_35_p = df_35_p.assign(PLUS_Bz=bz_plus_35)
+df_35_p.to_csv(f'{root_folder}visit_35_times_plus_error_{error}_aug.csv',index=False)
 
 
 df_35_m = df_35_m.assign(MINUS_Big_DF_Index=idx_minus_35)
@@ -1952,5 +2597,12 @@ df_35_m = df_35_m.assign(MINUS_Clock_Angle=clock_minus_35)
 df_35_m = df_35_m.assign(MINUS_LL_rec_V=LL_minus_35)
 df_35_m = df_35_m.assign(MINUS_HL_rec_V_pos=HL_minus_35_pos)
 df_35_m = df_35_m.assign(MINUS_HL_rec_V_neg=HL_minus_35_neg)
+df_35_m = df_35_m.assign(MINUS_Gershman_rec=gersh_minus_35)
+df_35_m = df_35_m.assign(MINUS_KH=KH_minus_35)
+df_35_m = df_35_m.assign(MINUS_KH_dawn=KH_dawn_minus_35)
+df_35_m = df_35_m.assign(MINUS_KH_dusk=KH_dusk_minus_35)
 df_35_m = df_35_m.assign(MINUS_B_Perp=b_perp_minus_35)
-df_35_m.to_csv(f'{root_folder}visit_35_times_minus_error_{error}_new.csv',index=False)
+df_35_m = df_35_m.assign(MINUS_Bx=bx_minus_35)
+df_35_m = df_35_m.assign(MINUS_By=by_minus_35)
+df_35_m = df_35_m.assign(MINUS_Bz=bz_minus_35)
+df_35_m.to_csv(f'{root_folder}visit_35_times_minus_error_{error}_aug.csv',index=False)

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Fri Oct 18 14:15:48 2024
 
@@ -23,13 +25,23 @@ root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/python_scrip
 # windows
 # root_folder = ''
 
-# leap seconds kernal - need this for ephemerous time
+# leap seconds kernal
 spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/naif0012.tls")
+# this one is for iau - planetary constants
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/pck00010.tpc")
+# this one has cooridinate systems in it
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/juno_v12.tf")
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/temp.tf")
+# juno location
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/spk_rec_160522_160729_160909.bsp")
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/spk_rec_160312_160522_160614.bsp")
 
 
 RJ = 71492
 
-sw_data = pd.read_csv(root_folder+'merged_sw_mag.csv')
+
+sw_data = pd.read_csv(root_folder+'merged_sw_mag_v3.csv')
+
 # mag_df = pd.read_csv(root_folder+'mag_30sec_df.csv')
 juno_loc_155 = pd.read_csv(root_folder+'juno_position_155_df.csv')
 juno_loc_156_plus = pd.read_csv(root_folder+'juno_position_156_plus_df.csv')
@@ -58,9 +70,8 @@ pressure = sw_data['RAM_PRESSURE_PROTONS_NPA'].to_numpy()
 velocity = sw_data['V_KMPS'].to_numpy()
 
 Br = sw_data['Br'].to_numpy()
-Bn = sw_data['Bn'].to_numpy()
 Bt = sw_data['Bt'].to_numpy()
-
+Bn = sw_data['Bn'].to_numpy()
 
 junotime = []
 for p in range(len(times)):
@@ -79,7 +90,6 @@ all_juno_times = pd.read_csv(root_folder+'juno_times_sw_df.csv')
 juno_times = all_juno_times['Juno_Time_SW'].to_numpy()
 
 et_time = spice.str2et(juno_times)
-
 
 
 def between_idxs(dataset,first,last):
@@ -134,11 +144,7 @@ Br_155 = index_compare(idx_155,Br)
 Bt_155 = index_compare(idx_155,Bt)
 Bn_155 = index_compare(idx_155,Bn)
 
-
 mp_loc_155, bs_loc_155 = jmp.multi_nose(pressure_155)
-clock_angle_155, clock_angle_range = mdc.clock_angle_calculator(Bn_155, Bt_155,'no','no')
-B_perp_155 = mdc.B_perp_calculator(Bn_155, Bt_155, 'no')
-
 mp_loc_155_km = []
 bs_loc_155_km = []
 # loop through magnetopause and bow shock locations to convert to km
@@ -150,43 +156,92 @@ for i in range(len(mp_loc_155)):
     bs = bs_loc_155[i]*RJ
     bs_loc_155_km.append(bs)
 
-times_155,iono_time_155,overall_time_155,time_shift_155,time_mp_bs_155,to_iono_time_155 = ptsw.propagation_time(pressure_155,velocity_155,X_juno_155,Y_juno_155,time_155_utc,mp_loc_155_km,bs_loc_155_km)
+juno_times_155,iono_time_155,overall_time_155,time_shift_155,time_mp_bs_155,to_iono_time_155, delta_155, dx_155 = ptsw.propagation_time(velocity_155,X_juno_155,Y_juno_155,time_155_utc,mp_loc_155_km,bs_loc_155_km,'splitter')
+
+iono_time_string_155 = [str(item) for item in iono_time_155]
+iono_time_str_155 = np.array(iono_time_string_155)
+
+ettimes_155 = []
+# need to make this into for loop as can only convert one thing into date time at a time
+for p in range(len(iono_time_str_155)):
+    times_155 = spice.str2et(iono_time_str_155[p])
+    ettimes_155.append(times_155)
+
+# Build RTN magnetic field vectors
+B_vectors_rtn_155 = np.stack([Br_155, Bt_155, Bn_155], axis=1)  # shape (N, 3)
+
+# Get transformation matrices from RTN to IAU_JUPITER
+transform_matrices_155 = np.array([spice.pxform('JUNO_SUN_EQU_RTN', 'JUNO_JM', t) for t in ettimes_155])  # shape (N, 3, 3)
+
+# Transform each B vector using the rotation matrix at each time
+B_vectors_155 = np.einsum('nij,nj->ni', transform_matrices_155, B_vectors_rtn_155)  # shape (N, 3)
+
+# Extract components in JM frame
+Bx_155 = B_vectors_155[:, 0] #* -1
+By_155 = B_vectors_155[:, 1] #* -1
+Bz_155 = B_vectors_155[:, 2] 
+
+clock_angle_155 = mdc.clock_angle_calculator(Bz_155, By_155,'no','no')
+B_perp_155 = mdc.B_perp_calculator(Bz_155, By_155, 'no')
+    
+pressure_155 = np.array(pressure_155)
+velocity_155 = np.array(velocity_155)
+Bx_155 = np.array(Bx_155)
+By_155 = np.array(By_155)
+Bz_155 = np.array(Bz_155)
+mp_loc_155_km = np.array(mp_loc_155_km)
+B_perp_155 = np.array(B_perp_155)
+clock_angle_155 = np.array(clock_angle_155)
+
+
 LL_155, HL_pos_155, HL_neg_155 = rv.reconnection_voltages(clock_angle_155,B_perp_155,velocity_155,mp_loc_155_km,times_155)
+gersh_volt_155 = rv.reconnection_gershman(Bx_155,By_155,Bz_155,velocity_155,pressure_155,mp_loc_155_km,B_perp_155,clock_angle_155)
+KH_155 = rv.kelvin_helmholtz(velocity_155,pressure_155,mp_loc_155_km)
+KH_dawn_155, KH_dusk_155 = rv.kelvin_helmholtz_dd(velocity_155,pressure_155,mp_loc_155_km)
+
+
 
 doy_155_sw = pd.DataFrame()
-doy_155_sw = doy_155_sw.assign(UTC=times_155)
+doy_155_sw = doy_155_sw.assign(UTC=juno_times_155)
 doy_155_sw = doy_155_sw.assign(Pressure=pressure_155)
 doy_155_sw = doy_155_sw.assign(Velocity=velocity_155)
 doy_155_sw = doy_155_sw.assign(Juno_X_Distance=X_juno_155)
 doy_155_sw = doy_155_sw.assign(Juno_X_Distance_RJ=X_juno_RJ_155)
-doy_155_sw = doy_155_sw.assign(Juno_Y_Distance=Y_juno_RJ_155)
+doy_155_sw = doy_155_sw.assign(Juno_Y_Distance=Y_juno_155)
+doy_155_sw = doy_155_sw.assign(Juno_Y_Distance_RJ=Y_juno_RJ_155)
 doy_155_sw = doy_155_sw.assign(Total_Travel_Time=overall_time_155)
 doy_155_sw = doy_155_sw.assign(Time_Shift_To_Bow_Shock=time_shift_155)
 doy_155_sw = doy_155_sw.assign(Magnetosheath_Travel_Time=time_mp_bs_155)
 doy_155_sw = doy_155_sw.assign(Magnetopause_To_Ionosphere=to_iono_time_155)
 doy_155_sw = doy_155_sw.assign(Time_Impacts_Ionosphere=iono_time_155)
+doy_155_sw = doy_155_sw.assign(delta=delta_155)
+doy_155_sw = doy_155_sw.assign(dx=dx_155)
 doy_155_sw = doy_155_sw.assign(Bow_Shock_Location=bs_loc_155)
 doy_155_sw = doy_155_sw.assign(Bow_Shock_Location_km=bs_loc_155_km)
 doy_155_sw = doy_155_sw.assign(Magnetopause_Location=mp_loc_155)
 doy_155_sw = doy_155_sw.assign(Magnetopause_Location_km=mp_loc_155_km)
-doy_155_sw = doy_155_sw.assign(Br=Br_155)
-doy_155_sw = doy_155_sw.assign(Bt=Bt_155)
-doy_155_sw = doy_155_sw.assign(Bn=Bn_155)
+doy_155_sw = doy_155_sw.assign(Bx=Bx_155)
+doy_155_sw = doy_155_sw.assign(By=By_155)
+doy_155_sw = doy_155_sw.assign(Bz=Bz_155)
 doy_155_sw = doy_155_sw.assign(Clock_Angle=clock_angle_155)
 doy_155_sw = doy_155_sw.assign(B_perp=B_perp_155)
 doy_155_sw = doy_155_sw.assign(Low_Latitude_Reconnection=LL_155)
 doy_155_sw = doy_155_sw.assign(High_Latitude_Reconnection_By_Pos=HL_pos_155)
 doy_155_sw = doy_155_sw.assign(High_Latitude_Reconnection_By_Neg=HL_neg_155)
-
+doy_155_sw = doy_155_sw.assign(Gershman_Reconnection_Power=gersh_volt_155)
+doy_155_sw = doy_155_sw.assign(Kelvin_Helmholtz_Power=KH_155)
+doy_155_sw = doy_155_sw.assign(Kelvin_Helmholtz_Power_Dawn=KH_dawn_155)
+doy_155_sw = doy_155_sw.assign(Kelvin_Helmholtz_Power_Dusk=KH_dusk_155)
+'''
 # # export dataframe to read into other files
-doy_155_sw.to_csv(root_folder+'juno_data_doy_155.csv',index=False)
+doy_155_sw.to_csv(root_folder+'juno_data_doy_155_aug.csv',index=False)
 
 # # # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 doy_155_sw.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
 # # # export SORTED dataframe to read into other files
-doy_155_sw.to_csv(root_folder+'juno_data_doy_155_ionotime.csv',index=False)
-
+doy_155_sw.to_csv(root_folder+'juno_data_doy_155_ionotime_aug.csv',index=False)
+'''
 
 # -------- visits 26,27,28 -------
 
@@ -208,11 +263,7 @@ Br_156_plus = index_compare(idx_156_plus,Br)
 Bt_156_plus = index_compare(idx_156_plus,Bt)
 Bn_156_plus = index_compare(idx_156_plus,Bn)
 
-
 mp_loc_156_plus, bs_loc_156_plus = jmp.multi_nose(pressure_156_plus)
-clock_angle_156_plus, clock_angle_range = mdc.clock_angle_calculator(Bn_156_plus, Bt_156_plus,'no','no')
-B_perp_156_plus = mdc.B_perp_calculator(Bn_156_plus, Bt_156_plus, 'no')
-
 mp_loc_156_plus_km = []
 bs_loc_156_plus_km = []
 # loop through magnetopause and bow shock locations to convert to km
@@ -224,43 +275,89 @@ for i in range(len(mp_loc_156_plus)):
     bs = bs_loc_156_plus[i]*RJ
     bs_loc_156_plus_km.append(bs)
 
-times_156_plus,iono_time_156_plus,overall_time_156_plus,time_shift_156_plus,time_mp_bs_156_plus,to_iono_time_156_plus = ptsw.propagation_time(pressure_156_plus,velocity_156_plus,X_juno_156_plus,Y_juno_156_plus,time_156_plus_utc,mp_loc_156_plus_km,bs_loc_156_plus_km)
+juno_times_156_plus,iono_time_156_plus,overall_time_156_plus,time_shift_156_plus,time_mp_bs_156_plus,to_iono_time_156_plus, delta_156_plus, dx_156_plus = ptsw.propagation_time(velocity_156_plus,X_juno_156_plus,Y_juno_156_plus,time_156_plus_utc,mp_loc_156_plus_km,bs_loc_156_plus_km,'splitter')
+
+iono_time_string_156_plus = [str(item) for item in iono_time_156_plus]
+iono_time_str_156_plus = np.array(iono_time_string_156_plus)
+
+ettimes_156_plus = []
+# need to make this into for loop as can only convert one thing into date time at a time
+for p in range(len(iono_time_str_156_plus)):
+    times_156_plus = spice.str2et(iono_time_str_156_plus[p])
+    ettimes_156_plus.append(times_156_plus)
+
+# Build RTN magnetic field vectors
+B_vectors_rtn_156_plus = np.stack([Br_156_plus, Bt_156_plus, Bn_156_plus], axis=1)  # shape (N, 3)
+
+# Get transformation matrices from RTN to IAU_JUPITER
+transform_matrices_156_plus = np.array([spice.pxform('JUNO_SUN_EQU_RTN', 'JUNO_JM', t) for t in ettimes_156_plus])  # shape (N, 3, 3)
+
+# Transform each B vector using the rotation matrix at each time
+B_vectors_156_plus = np.einsum('nij,nj->ni', transform_matrices_156_plus, B_vectors_rtn_156_plus)  # shape (N, 3)
+
+# Extract components in JM frame
+Bx_156_plus = B_vectors_156_plus[:, 0] #* -1
+By_156_plus = B_vectors_156_plus[:, 1] #* -1
+Bz_156_plus = B_vectors_156_plus[:, 2] 
+
+clock_angle_156_plus = mdc.clock_angle_calculator(Bz_156_plus, By_156_plus,'no','no')
+B_perp_156_plus = mdc.B_perp_calculator(Bz_156_plus, By_156_plus, 'no')
+    
+pressure_156_plus = np.array(pressure_156_plus)
+velocity_156_plus = np.array(velocity_156_plus)
+Bx_156_plus = np.array(Bx_156_plus)
+By_156_plus = np.array(By_156_plus)
+Bz_156_plus = np.array(Bz_156_plus)
+mp_loc_156_plus_km = np.array(mp_loc_156_plus_km)
+B_perp_156_plus = np.array(B_perp_156_plus)
+clock_angle_156_plus = np.array(clock_angle_156_plus)
+
 LL_156_plus, HL_pos_156_plus, HL_neg_156_plus = rv.reconnection_voltages(clock_angle_156_plus,B_perp_156_plus,velocity_156_plus,mp_loc_156_plus_km,times_156_plus)
+gersh_volt_156_plus = rv.reconnection_gershman(Bx_156_plus,By_156_plus,Bz_156_plus,velocity_156_plus,pressure_156_plus,mp_loc_156_plus_km,B_perp_156_plus,clock_angle_156_plus)
+KH_156_plus = rv.kelvin_helmholtz(velocity_156_plus,pressure_156_plus,mp_loc_156_plus_km)
+KH_dawn_156_plus, KH_dusk_156_plus = rv.kelvin_helmholtz_dd(velocity_156_plus,pressure_156_plus,mp_loc_156_plus_km)
 
 doy_156_plus_sw = pd.DataFrame()
-doy_156_plus_sw = doy_156_plus_sw.assign(UTC=times_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(UTC=juno_times_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Pressure=pressure_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Velocity=velocity_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Juno_X_Distance=X_juno_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Juno_X_Distance_RJ=X_juno_RJ_156_plus)
-doy_156_plus_sw = doy_156_plus_sw.assign(Juno_Y_Distance=Y_juno_RJ_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(Juno_Y_Distance=Y_juno_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(Juno_Y_Distance_RJ=Y_juno_RJ_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Total_Travel_Time=overall_time_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Time_Shift_To_Bow_Shock=time_shift_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Magnetosheath_Travel_Time=time_mp_bs_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Magnetopause_To_Ionosphere=to_iono_time_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Time_Impacts_Ionosphere=iono_time_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(delta=delta_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(dx=dx_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Bow_Shock_Location=bs_loc_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Bow_Shock_Location_km=bs_loc_156_plus_km)
 doy_156_plus_sw = doy_156_plus_sw.assign(Magnetopause_Location=mp_loc_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Magnetopause_Location_km=mp_loc_156_plus_km)
-doy_156_plus_sw = doy_156_plus_sw.assign(Br=Br_156_plus)
-doy_156_plus_sw = doy_156_plus_sw.assign(Bt=Bt_156_plus)
-doy_156_plus_sw = doy_156_plus_sw.assign(Bn=Bn_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(Bx=Bx_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(By=Bx_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(Bz=Bz_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Clock_Angle=clock_angle_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(B_perp=B_perp_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(Low_Latitude_Reconnection=LL_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(High_Latitude_Reconnection_By_Pos=HL_pos_156_plus)
 doy_156_plus_sw = doy_156_plus_sw.assign(High_Latitude_Reconnection_By_Neg=HL_neg_156_plus)
-
+doy_156_plus_sw = doy_156_plus_sw.assign(Gershman_Reconnection_Power=gersh_volt_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(Kelvin_Helmholtz_Power=KH_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(Kelvin_Helmholtz_Power_Dawn=KH_dawn_156_plus)
+doy_156_plus_sw = doy_156_plus_sw.assign(Kelvin_Helmholtz_Power_Dusk=KH_dusk_156_plus)
+'''
 # # export dataframe to read into other files
-doy_156_plus_sw.to_csv(root_folder+'juno_data_doy_156_plus.csv',index=False)
+doy_156_plus_sw.to_csv(root_folder+'juno_data_doy_156_plus_aug.csv',index=False)
 
 # # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 doy_156_plus_sw.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
 # # export SORTED dataframe to read into other files
-doy_156_plus_sw.to_csv(root_folder+'juno_data_doy_156_plus_ionotime.csv',index=False)
-
+doy_156_plus_sw.to_csv(root_folder+'juno_data_doy_156_plus_ionotime_aug.csv',index=False)
+'''
 
 # -------- visits 34 & 35 -----------
 
@@ -283,9 +380,6 @@ Bt_175 = index_compare(idx_175,Bt)
 Bn_175 = index_compare(idx_175,Bn)
 
 mp_loc_175, bs_loc_175 = jmp.multi_nose(pressure_175)
-clock_angle_175, clock_angle_range = mdc.clock_angle_calculator(Bn_175, Bt_175,'no','no')
-B_perp_175 = mdc.B_perp_calculator(Bn_175, Bt_175, 'no')
-
 mp_loc_175_km = []
 bs_loc_175_km = []
 # loop through magnetopause and bow shock locations to convert to km
@@ -297,39 +391,86 @@ for i in range(len(mp_loc_175)):
     bs = bs_loc_175[i]*RJ
     bs_loc_175_km.append(bs)
 
-times_175,iono_time_175,overall_time_175,time_shift_175,time_mp_bs_175,to_iono_time_175 = ptsw.propagation_time(pressure_175,velocity_175,X_juno_175,Y_juno_175,time_175_utc,mp_loc_175_km,bs_loc_175_km)
+juno_times_175,iono_time_175,overall_time_175,time_shift_175,time_mp_bs_175,to_iono_time_175, delta_175, dx_175 = ptsw.propagation_time(velocity_175,X_juno_175,Y_juno_175,time_175_utc,mp_loc_175_km,bs_loc_175_km,'splitter')
+
+iono_time_string_175 = [str(item) for item in iono_time_175]
+iono_time_str_175 = np.array(iono_time_string_175)
+
+ettimes_175 = []
+# need to make this into for loop as can only convert one thing into date time at a time
+for p in range(len(iono_time_str_175)):
+    times_175 = spice.str2et(iono_time_str_175[p])
+    ettimes_175.append(times_175)
+
+# Build RTN magnetic field vectors
+B_vectors_rtn_175 = np.stack([Br_175, Bt_175, Bn_175], axis=1)  # shape (N, 3)
+
+# Get transformation matrices from RTN to IAU_JUPITER
+transform_matrices_175 = np.array([spice.pxform('JUNO_SUN_EQU_RTN', 'JUNO_JM', t) for t in ettimes_175])  # shape (N, 3, 3)
+
+# Transform each B vector using the rotation matrix at each time
+B_vectors_175 = np.einsum('nij,nj->ni', transform_matrices_175, B_vectors_rtn_175)  # shape (N, 3)
+
+# Extract components in JM frame
+Bx_175 = B_vectors_175[:, 0] #* -1
+By_175 = B_vectors_175[:, 1] #* -1
+Bz_175 = B_vectors_175[:, 2] 
+
+clock_angle_175 = mdc.clock_angle_calculator(Bz_175, By_175,'no','no')
+B_perp_175 = mdc.B_perp_calculator(Bz_175, By_175, 'no')
+    
+pressure_175 = np.array(pressure_175)
+velocity_175 = np.array(velocity_175)
+Bx_175 = np.array(Bx_175)
+Bz_175 = np.array(Bz_175)
+By_175 = np.array(By_175)
+mp_loc_175_km = np.array(mp_loc_175_km)
+B_perp_175 = np.array(B_perp_175)
+clock_angle_175 = np.array(clock_angle_175)
+
 LL_175, HL_pos_175, HL_neg_175 = rv.reconnection_voltages(clock_angle_175,B_perp_175,velocity_175,mp_loc_175_km,times_175)
+gersh_volt_175 = rv.reconnection_gershman(Bx_175,By_175,Bz_175,velocity_175,pressure_175,mp_loc_175_km,B_perp_175,clock_angle_175)
+KH_175 = rv.kelvin_helmholtz(velocity_175,pressure_175,mp_loc_175_km)
+KH_dawn_175, KH_dusk_175 = rv.kelvin_helmholtz_dd(velocity_175,pressure_175,mp_loc_175_km)
 
 doy_175_sw = pd.DataFrame()
-doy_175_sw = doy_175_sw.assign(UTC=times_175)
+doy_175_sw = doy_175_sw.assign(UTC=juno_times_175)
 doy_175_sw = doy_175_sw.assign(Pressure=pressure_175)
 doy_175_sw = doy_175_sw.assign(Velocity=velocity_175)
 doy_175_sw = doy_175_sw.assign(Juno_X_Distance=X_juno_175)
 doy_175_sw = doy_175_sw.assign(Juno_X_Distance_RJ=X_juno_RJ_175)
-doy_175_sw = doy_175_sw.assign(Juno_Y_Distance=Y_juno_RJ_175)
+doy_175_sw = doy_175_sw.assign(Juno_Y_Distance=Y_juno_175)
+doy_175_sw = doy_175_sw.assign(Juno_Y_Distance_RJ=Y_juno_RJ_175)
 doy_175_sw = doy_175_sw.assign(Total_Travel_Time=overall_time_175)
 doy_175_sw = doy_175_sw.assign(Time_Shift_To_Bow_Shock=time_shift_175)
 doy_175_sw = doy_175_sw.assign(Magnetosheath_Travel_Time=time_mp_bs_175)
 doy_175_sw = doy_175_sw.assign(Magnetopause_To_Ionosphere=to_iono_time_175)
 doy_175_sw = doy_175_sw.assign(Time_Impacts_Ionosphere=iono_time_175)
+doy_175_sw = doy_175_sw.assign(delta=delta_175)
+doy_175_sw = doy_175_sw.assign(dx=dx_175)
 doy_175_sw = doy_175_sw.assign(Bow_Shock_Location=bs_loc_175)
 doy_175_sw = doy_175_sw.assign(Bow_Shock_Location_km=bs_loc_175_km)
 doy_175_sw = doy_175_sw.assign(Magnetopause_Location=mp_loc_175)
 doy_175_sw = doy_175_sw.assign(Magnetopause_Location_km=mp_loc_175_km)
-doy_175_sw = doy_175_sw.assign(Br=Br_175)
-doy_175_sw = doy_175_sw.assign(Bt=Bt_175)
-doy_175_sw = doy_175_sw.assign(Bn=Bn_175)
+doy_175_sw = doy_175_sw.assign(Bx=Bx_175)
+doy_175_sw = doy_175_sw.assign(By=By_175)
+doy_175_sw = doy_175_sw.assign(Bz=Bz_175)
 doy_175_sw = doy_175_sw.assign(Clock_Angle=clock_angle_175)
 doy_175_sw = doy_175_sw.assign(B_perp=B_perp_175)
 doy_175_sw = doy_175_sw.assign(Low_Latitude_Reconnection=LL_175)
 doy_175_sw = doy_175_sw.assign(High_Latitude_Reconnection_By_Pos=HL_pos_175)
 doy_175_sw = doy_175_sw.assign(High_Latitude_Reconnection_By_Neg=HL_neg_175)
-
+doy_175_sw = doy_175_sw.assign(Gershman_Reconnection_Power=gersh_volt_175)
+doy_175_sw = doy_175_sw.assign(Kelvin_Helmholtz_Power=KH_175)
+doy_175_sw = doy_175_sw.assign(Kelvin_Helmholtz_Power_Dawn=KH_dawn_175)
+doy_175_sw = doy_175_sw.assign(Kelvin_Helmholtz_Power_Dusk=KH_dusk_175)
+'''
 # # export dataframe to read into other files
-doy_175_sw.to_csv(root_folder+'juno_data_doy_175.csv',index=False)
+doy_175_sw.to_csv(root_folder+'juno_data_doy_175_aug.csv',index=False)
 
 # # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 doy_175_sw.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
 # # export SORTED dataframe to read into other files
-doy_175_sw.to_csv(root_folder+'juno_data_doy_175_ionotime.csv',index=False)
+doy_175_sw.to_csv(root_folder+'juno_data_doy_175_ionotime_aug.csv',index=False)
+'''

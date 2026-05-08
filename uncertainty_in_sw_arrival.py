@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Mon Sep  2 13:26:22 2024
 
@@ -17,10 +19,10 @@ root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/python_scrip
 
 #  ------------------- dataframes -----------------
 visit_times = pd.read_csv(root_folder+'visit_times.csv')
-df = pd.read_csv(root_folder+'juno_data_big_df_realtime_new.csv')
-df_155 = pd.read_csv(root_folder+'juno_data_doy_155.csv')
-df_156_plus = pd.read_csv(root_folder+'juno_data_doy_156_plus.csv')
-df_175 = pd.read_csv(root_folder+'juno_data_doy_175.csv')
+df = pd.read_csv(root_folder+'juno_data_big_df_realtime_aug.csv')
+df_155 = pd.read_csv(root_folder+'juno_data_doy_155_aug.csv')
+df_156_plus = pd.read_csv(root_folder+'juno_data_doy_156_plus_aug.csv')
+df_175 = pd.read_csv(root_folder+'juno_data_doy_175_aug.csv')
 
 travel_times_main = df['Total_Travel_Time'].to_numpy()
 travel_times_155 = df_155['Total_Travel_Time'].to_numpy()
@@ -30,7 +32,7 @@ travel_times_175 = df_175['Total_Travel_Time'].to_numpy()
 
 # -------------- error calculation -------------
 
-error='10'
+error='20'
 error_div = int(error)/100
 
 
@@ -71,7 +73,7 @@ df_extra = df_extra.assign(Ionosphere_Times_Minus_Error=minus_times)
 df_new = pd.concat([df, df_extra],axis=1)
 
 
-df_new.to_csv(f'{root_folder}juno_data_big_df_realtime_new_errors_{error}.csv',index=False)
+df_new.to_csv(f'{root_folder}juno_data_big_df_realtime_new_errors_{error}_aug.csv',index=False)
 
 # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 df_iono =  df_new
@@ -79,7 +81,7 @@ df_iono =  df_new
 df_iono.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
 # # export SORTED dataframe to read into other files
-df_iono.to_csv(f'{root_folder}juno_data_big_df_ionotime_new_errors_{error}.csv',index=False)
+df_iono.to_csv(f'{root_folder}juno_data_big_df_ionotime_new_errors_{error}_aug.csv',index=False)
 
 
 # -------- visit 25 -------------
@@ -124,7 +126,7 @@ df_extra_155 = df_extra_155.assign(Ionosphere_Times_Minus_Error=minus_times_155)
 df_new_155 = pd.concat([df_155, df_extra_155],axis=1)
 
 
-df_new_155.to_csv(f'{root_folder}juno_data_doy_155_errors_{error}.csv',index=False)
+df_new_155.to_csv(f'{root_folder}juno_data_doy_155_errors_{error}_aug.csv',index=False)
 
 # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 df_iono_155 =  df_new_155
@@ -132,7 +134,7 @@ df_iono_155 =  df_new_155
 df_iono_155.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
 # # export SORTED dataframe to read into other files
-df_iono_155.to_csv(f'{root_folder}juno_data_doy_155_ionotime_errors_{error}.csv',index=False)
+df_iono_155.to_csv(f'{root_folder}juno_data_doy_155_ionotime_errors_{error}_aug.csv',index=False)
 
 
 
@@ -180,7 +182,7 @@ df_extra_156_plus = df_extra_156_plus.assign(Ionosphere_Times_Minus_Error=minus_
 df_new_156_plus = pd.concat([df_156_plus, df_extra_156_plus],axis=1)
 
 
-df_new_156_plus.to_csv(f'{root_folder}juno_data_doy_156_plus_errors_{error}.csv',index=False)
+df_new_156_plus.to_csv(f'{root_folder}juno_data_doy_156_plus_errors_{error}_aug.csv',index=False)
 
 # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 df_iono_156_plus =  df_new_156_plus
@@ -188,7 +190,7 @@ df_iono_156_plus =  df_new_156_plus
 df_iono_156_plus.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
 # # export SORTED dataframe to read into other files
-df_iono_156_plus.to_csv(f'{root_folder}juno_data_doy_156_plus_ionotime_errors_{error}.csv',index=False)
+df_iono_156_plus.to_csv(f'{root_folder}juno_data_doy_156_plus_ionotime_errors_{error}_aug.csv',index=False)
 
     
 # ----------------- visits 34 and 35 ---------------------
@@ -235,7 +237,7 @@ df_extra_175 = df_extra_175.assign(Ionosphere_Times_Minus_Error=minus_times_175)
 df_new_175 = pd.concat([df_175, df_extra_175],axis=1)
 
 
-df_new_175.to_csv(f'{root_folder}juno_data_doy_175_errors_{error}.csv',index=False)
+df_new_175.to_csv(f'{root_folder}juno_data_doy_175_errors_{error}_aug.csv',index=False)
 
 # rearrange dataframe to be sorted by time sw/mag data paramters effect ionosphere
 df_iono_175 =  df_new_175
@@ -243,4 +245,4 @@ df_iono_175 =  df_new_175
 df_iono_175.sort_values(by='Time_Impacts_Ionosphere', inplace=True)
 
 # # export SORTED dataframe to read into other files
-df_iono_175.to_csv(f'{root_folder}juno_data_doy_175_ionotime_errors_{error}.csv',index=False)
+df_iono_175.to_csv(f'{root_folder}juno_data_doy_175_ionotime_errors_{error}_aug.csv',index=False)

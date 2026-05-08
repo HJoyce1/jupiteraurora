@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Dec  5 13:03:08 2023
@@ -70,3 +71,46 @@ df = pd.DataFrame(data=all_times_array, index = num_image, columns=visit_list)
 df = df.add_prefix('Visit_')
 
 df.to_csv(root_folder+'visit_times.csv',index=False)
+    
+
+# if l == '05': - if visit is frames short
+#     year= 2016
+#     time = str(100)
+#     extra = 'nichols/'
+#     arch = '*_v'+ l
+#     ti = str('/*0'+time+'*')
+#     ab = glob.glob(f'/Users/hannah/OneDrive - Lancaster University/aurora/data/{year}/extract/{extra}'+arch+'/nopolar'+time+ti)
+#     ab.sort()
+    
+#     visit_time=[]
+#     for  n,i in tqdm(enumerate(ab)):
+#           hdulist = fits.open(i)
+#           header = hdulist[1].header
+#           # jupiter times
+#           exp_time = header['EXPT']
+#           start_time = parse(header['UDATE'])     # create datetime object
+#           try:
+#               dist_org = header['DIST_ORG']
+#               ltime = dist_org*c.au/c.c
+#               lighttime = dt.timedelta(seconds=ltime)
+#           except KeyError:
+#                 lighttime = dt.timedelta(seconds=2524.42) 
+#                 exposure = dt.timedelta(seconds=exp_time)
+    
+#           start_time_jup = start_time - lighttime   
+#           visit_time.append(start_time_jup)
+         
+#     visit_05_time.append(visit_time)
+#     visit_05_time = np.array(visit_05_time)
+#     visit_05_time = visit_05_time.T
+
+#breakpoint()
+
+# #df_additional = pd.DataFrame(data=visit_05_time, index=num_image)
+# df_additional = pd.DataFrame(visit_05_time, columns=['Visit_05'],index=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]) #{'Visit_05:', visit_05_time}
+# df_additional = df_additional.assign(Visit_05=visit_05_time)
+
+# df_new = pd.concat([df, df_additional],axis=1)
+
+# df_new = df_new.sort_index(axis=1)
+         
