@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Created on Fri Oct 25 16:28:34 2024
 
@@ -24,13 +25,15 @@ sw_end = 54785 # final data point for relevant solar wind section
 # load in dataframes
 sw_df = pd.read_csv(root_folder+'solar_wind_data.csv')
 juno_loc = pd.read_csv(root_folder+'juno_position_df.csv',delimiter=',')
-mag_df = pd.read_csv(root_folder+'mag_30sec_df.csv')
+mag_df = pd.read_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/mag_30sec_df.csv') 
+# mag_other_df = pd.read_csv(root_folder+'transformed_mag_df.csv')
 
 mag_df = mag_df.rename(columns={"Juno_Time":"UTC"})
 
 UTC_sw = sw_df['UTC'].to_numpy()
 
 UTC_mag = mag_df['UTC'].to_numpy()
+
 
 times_sw = []
 # need to make this into for loop as can only convert one thing into date time at a time
@@ -51,4 +54,4 @@ sw_df = sw_df.assign(Time=times_sw)
 
 new_df = pd.merge_asof(sw_df, mag_df, on="Time", tolerance=pd.Timedelta("30s"))
 
-new_df.to_csv(root_folder+'merged_sw_mag.csv',index=False)
+new_df.to_csv(root_folder+'merged_sw_mag_v3.csv',index=False)
