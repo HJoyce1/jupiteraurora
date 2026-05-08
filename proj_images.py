@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Tue May 23 13:01:48 2023
 updated version
@@ -207,7 +209,7 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
         v_visit = visit
         
         print(visit)
-        if visit == '12' or visit == '15':        
+        if visit == '01' or visit == '12' or visit == '15' or visit == '26' or visit == '03':        
             # # deep rarefaction
             # noon_12 = [[22,163],[28,163],[33,193],[30,210],[25,210]] #[[22,197],[28,197],[33,167],[30,150],[25,150]]
             # dusk_12 = [[8,240],[22,189],[24,210],[16,240]]#[[8,120],[22,171],[24,150],[16,120]]
@@ -226,18 +228,41 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
             # noon_active = shape(noon_avg)  
             # dusk_active = shape(dusk_avg)
             
-            dusk_active = shape([[8,270],[11,230],[23,180],[24,215],[18,230],[15,270]])
-            swirl = shape([[0,90],[2,90],[15,140],[22,158],[23,180],[11,230],[8,270],[0,270]])
-            noon_active = shape([[23,180],[22,158],[27,162.5],[32.5,191.5],[30.5,201],[24,215]])
+            # dusk_active = shape([[7,270],[10,230],[21,185],[30,190],[29,206],[17,230],[18,270]])
+            # noon_active = shape([[21,160],[24,160],[30,180],[30,190],[21,185]])
+            # swirl = shape([[0,90],[4,90],[21,160],[21,185],[10,230],[7,270],[0,270]])
+            
+            # def trapezium_dusk(a,b,A):
+            #     # A = a+b/2 * h
+            #     div = (a+b)/2
+            #     h = A/div
+                
+            #     # now use h to get side c
+            #     a_half = 0.5*a
+            #     c = np.sqrt(a_half**2 + h**2)
+            #     return c
+            #noon_lon = np.linspace(159,187.3,200)
+            # side_c = trapezium_dusk(7,20,380)
+        
+            
+            dusk_active = shape([[20,192.5],[30,200],[20,220],[15,230],[15,220],[20,192.5]])#([[13,220],[20,193.8],[29,200],[20,220],[230,13]])
+            swirl = shape([[7,112],[17,155],[18,185],[10,190]]) # 7 = 3, 8 = 4[[0,90]
+            noon_active = shape([[18,154],[24,154],[28,192],[22,192]])
+            
+            #shape([[20,190],[22,210],[12,250],[5.1,241]])
             
         else:
-            #assign verticies to confine regions
-            swirl = shape([[4,100],[6,100],[24,170],[24,188],[16,188]])
-            #swirl = shape([[100,4],[100,6],[170,22],[185,22],[185,16]])
-            noon_active = shape([[24,170],[28,170],[32,190],[28,205],[24,205]])
-            #noon_active = shape([[170,24],[170,28],[190,32],[205,28],[205,24]])
-            dusk_active = shape([[0,100],[4,100],[16,188],[24,188],[24,205],[10,205],[0,160]])
-            #dusk_active = shape([[100,0],[100,3],[188,16],[188,24],[205,24],[205,10],[160,0]])
+            # #assign verticies to confine regions
+            # swirl = shape([[4,100],[6,100],[24,170],[24,188],[16,188]])
+            # #swirl = shape([[100,4],[100,6],[170,22],[185,22],[185,16]])
+            # noon_active = shape([[24,170],[28,170],[32,190],[28,205],[24,205]])
+            # #noon_active = shape([[170,24],[170,28],[190,32],[205,28],[205,24]])
+            # dusk_active = shape([[0,100],[4,100],[16,188],[24,188],[24,205],[10,205],[0,160]])
+            # #dusk_active = shape([[100,0],[100,3],[188,16],[188,24],[205,24],[205,10],[160,0]])
+            
+            swirl = shape([[7,100],[17,143],[18,173],[10,178]])#shape([[3,100],[17,143],[18,173],[4,178]]) shape([[3,80],[16,120],[16,140],[4,175]]) #[[0,90]
+            noon_active = shape([[23,175],[29,175],[29,202],[23,202]])
+            dusk_active = shape([[3,185],[22,185],[22,205],[3,205]])
         
         #breakpoint()
         if whole_region_box == True:
@@ -633,51 +658,47 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
     # drawing the regions (if marked; only available for the North so far)
     if regions == True:
         
-        # ------------ for visits 12 & 15 --------------
+        # ------------ for visits 1, 12, 15 and 26 -------------
+
         # swirl
-        swirls = np.linspace(np.radians(90+shift),np.radians(140+shift),200)
-        swirl_line = np.linspace(2,15,200)
-        swirls2 = np.linspace(np.radians(140+shift),np.radians(158+shift),200)
-        swirl_line2 = np.linspace(15,22,200)
-        swirls3 = np.linspace(np.radians(158+shift),np.radians(180+shift),200)
-        swirl_line3 = np.linspace(22,23,200)
-        swirls4 = np.linspace(np.radians(180+shift),np.radians(230+shift),200)
-        swirl_line4 = np.linspace(23,11,200)
-        swirls5 = np.linspace(np.radians(230+shift),np.radians(270+shift),200)
-        swirl_line5 = np.linspace(11,8,200)
+        swirls = np.linspace(np.radians(90+shift),np.radians(160+shift),200)
+        swirl_line = np.linspace(4,21,200)
+        swirls2 = np.linspace(np.radians(185+shift),np.radians(230+shift),200)
+        swirl_line2 = np.linspace(21,10,200)
+        swirls3 = np.linspace(np.radians(230+shift),np.radians(270+shift),200)
+        swirl_line3 = np.linspace(10,7,200)
         
-        border1 = np.linspace(0,2,200)
-        border2 = np.linspace(8,0,200)
+        border1 = np.linspace(0,4,200) # 90 lon
+        border2 = np.linspace(7,0,200) # 270 lon
+        border3 = np.linspace(np.radians(185+shift),np.radians(160+shift),200) # 21 lat
         
-        # need two lines plotted 0 - 2 at 90 and 8 - 0 at 270
         
         # dusk
         dusks = np.linspace(np.radians(270+shift),np.radians(230+shift),200)
-        dusk_line = np.linspace(8,11,200)
-        dusks2 = np.linspace(np.radians(230+shift),np.radians(180+shift),200)
-        dusk_line2 = np.linspace(11,23,200)
-        dusks3 = np.linspace(np.radians(180+shift),np.radians(215+shift),200)
-        dusk_line3 = np.linspace(23,24,200)
-        dusks4 = np.linspace(np.radians(215+shift),np.radians(230+shift),200)
-        dusk_line4 = np.linspace(24,18,200)
-        dusks5 = np.linspace(np.radians(230+shift),np.radians(270+shift),200)
-        dusk_line5 = np.linspace(18,15,200)
+        dusk_line = np.linspace(7,10,200)
+        dusks2 = np.linspace(np.radians(230+shift),np.radians(185+shift),200)
+        dusk_line2 = np.linspace(10,21,200)
+        dusks3 = np.linspace(np.radians(185+shift),np.radians(190+shift),200)
+        dusk_line3 = np.linspace(21,30,200)
+        dusks4 = np.linspace(np.radians(190+shift),np.radians(206+shift),200)
+        dusk_line4 = np.linspace(30,29,200)
+        dusks5 = np.linspace(np.radians(206+shift),np.radians(230+shift),200)
+        dusk_line5 = np.linspace(29,17,200)
+        dusks6 = np.linspace(np.radians(230+shift),np.radians(270+shift),200)
+        dusk_line6 = np.linspace(17,18,200)
         
-        border3 = np.linspace(8,15,200)
+        border4 = np.linspace(7,18,200) #270 lon
         
         # noon
-        noons = np.linspace(np.radians(180+shift),np.radians(158+shift),200)
-        noon_line = np.linspace(23,22,200)
-        noons2 = np.linspace(np.radians(158+shift),np.radians(162.5+shift),200)
-        noon_line2 = np.linspace(22,27,200)
-        noons3 = np.linspace(np.radians(162.5+shift),np.radians(191.5+shift),200)
-        noon_line3 = np.linspace(27,32.5,200)
-        noons4 = np.linspace(np.radians(191.5+shift),np.radians(201+shift),200)
-        noon_line4 = np.linspace(32.5,30.5,200)
-        noons5 = np.linspace(np.radians(201+shift),np.radians(215+shift),200)
-        noon_line5 = np.linspace(30.5,24,200)
-        noons6 = np.linspace(np.radians(215+shift),np.radians(180+shift),200)
-        noon_line6 = np.linspace(24,23,200)
+        noons = np.linspace(np.radians(160+shift),np.radians(180+shift),200)
+        noon_line = np.linspace(24,29,200)
+        noons2 = np.linspace(np.radians(190+shift),np.radians(185+shift),200)
+        noon_line2 = np.linspace(29,21,200)
+        
+        border5 = np.linspace(21,24,200) # 160 lon
+        border6 = np.linspace(np.radians(190+shift),np.radians(180+shift),200) # 29 lat
+        border7 = np.linspace(np.radians(185+shift),np.radians(160+shift),200) # 21 lat
+        
         
         
         # ----------- for other visits ---------
@@ -686,12 +707,13 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
         # uplat_dawn = np.linspace(33, 11, 200)
         # downlat_dawn = np.linspace(39, 20, 200)
         
-        # swirl region
-        swirl = np.linspace(np.radians(170+shift),np.radians(100+shift),200)
-        swirl2 = np.linspace(np.radians(188+shift),np.radians(100+shift),200)
-        swirl_linee = np.linspace(24, 6, 200)
-        swirl_linee2 = np.linspace(16, 4, 200)
-        upnoon = np.linspace(np.radians(188+shift),np.radians(170+shift),200)
+     
+        
+        # swirl = np.linspace(np.radians(170+shift),np.radians(100+shift),200)
+        # swirl2 = np.linspace(np.radians(188+shift),np.radians(100+shift),200)
+        # swirl_linee = np.linspace(24, 6, 200)
+        # swirl_linee2 = np.linspace(16, 4, 200)
+        # upnoon = np.linspace(np.radians(188+shift),np.radians(170+shift),200)
         
         # ------------- testing -----------
         # # avg swirl
@@ -793,20 +815,20 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
         # --------- testing --------
     
         
-        # boundary between active regions
-        boundary = np.linspace(np.radians(205+shift),np.radians(188+shift),200)
+        # # boundary between active regions
+        # boundary = np.linspace(np.radians(205+shift),np.radians(188+shift),200)
        
-        # noon active region
-        updusk = np.linspace(np.radians(205+shift),np.radians(170+shift),200) #top of region line
-        lon_noon_a = np.linspace(np.radians(205+shift),np.radians(190+shift),100)
-        lon_noon_b = np.linspace(np.radians(190+shift),np.radians(170+shift),100)
-        downlat_noon_a = np.linspace(28, 32, 100)
-        downlat_noon_b = np.linspace(32, 28, 100)
-        # dusk active region
-        active = np.linspace(np.radians(205+shift),np.radians(160+shift),200) 
-        active_line = np.linspace(10, 0, 200)
-        active_2 = np.linspace(np.radians(188+shift),np.radians(100+shift),200)
-        active_line2 = np.linspace(16, 4, 200)
+        # # noon active region
+        # updusk = np.linspace(np.radians(205+shift),np.radians(170+shift),200) #top of region line
+        # lon_noon_a = np.linspace(np.radians(205+shift),np.radians(190+shift),100)
+        # lon_noon_b = np.linspace(np.radians(190+shift),np.radians(170+shift),100)
+        # downlat_noon_a = np.linspace(28, 32, 100)
+        # downlat_noon_b = np.linspace(32, 28, 100)
+        # # dusk active region
+        # active = np.linspace(np.radians(205+shift),np.radians(160+shift),200) 
+        # active_line = np.linspace(10, 0, 200)
+        # active_2 = np.linspace(np.radians(188+shift),np.radians(100+shift),200)
+        # active_line2 = np.linspace(16, 4, 200)
     
         
         # dusk main emission - kidney & bean - don't use atm
@@ -835,30 +857,112 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
         # bean_line10 = np.linspace(10, 12, 200)            
             
         if fixed == 'lon':
-            if hemis == "North" or hemis == "north" or hemis == "N" or hemis == "n":  
-                print(v_visit)
-                if v_visit == '12' or v_visit == '15':
-                    plt.plot(swirls,swirl_line,color='plum',linestyle='--', lw=2)
-                    plt.plot(swirls2,swirl_line2,color='plum',linestyle='--', lw=2)
-                    plt.plot(swirls3,swirl_line3,color='plum',linestyle='--', lw=2)
-                    plt.plot(swirls4,swirl_line4,color='plum',linestyle='--', lw=2)
-                    plt.plot(swirls5,swirl_line5,color='plum',linestyle='--', lw=2)
-                    plt.plot(200*[np.radians(90+shift)], border1,color='plum',linestyle='--', lw=2)
-                    plt.plot(200*[np.radians(270+shift)],border2,color='plum',linestyle='--', lw=2)
+                print('High CML visit')
+                if v_visit == '01' or v_visit == '12' or v_visit == '15' or v_visit == '26':# or v_visit == '11':
                     
-                    plt.plot(dusks,dusk_line,color='khaki',linestyle='-', lw=1)
-                    plt.plot(dusks2,dusk_line2,color='khaki',linestyle='-', lw=1)
-                    plt.plot(dusks3,dusk_line3,color='khaki',linestyle='-', lw=1)
-                    plt.plot(dusks4,dusk_line4,color='khaki',linestyle='-', lw=1)
-                    plt.plot(dusks5,dusk_line5,color='khaki',linestyle='-', lw=1)
-                    plt.plot(200*[np.radians(270+shift)],border3,color='khaki',linestyle='-',lw=1)
+                    # new - for most visits
+                    # swirl = shape([[0,81],[6,81],[20,162],[20,171],[0,171]])
+                    # noon_active = shape([[22,166],[28,166],[30,199],[24,199]])
+                    # dusk_active = shape([[3,179],[22,179],[22,199],[3,199]])
                     
-                    plt.plot(noons,noon_line,'c-', lw=1)
-                    plt.plot(noons2,noon_line2,'c-', lw=1)
-                    plt.plot(noons3,noon_line3,'c-', lw=1)
-                    plt.plot(noons4,noon_line4,'c-', lw=1)
-                    plt.plot(noons5,noon_line5,'c-', lw=1)
-                    plt.plot(noons6,noon_line6,'c-', lw=1)
+                    # def trapezium_dusk(a,b,A):
+                    #     # A = a+b/2 * h
+                    #     div = (a+b
+                    #     h = A/div
+                        
+                    #     # now use h to get side c
+                    #     a_half = 0.5*a
+                    #     c = np.sqrt(a_half**2 + h**2)
+                    #     return c
+                    
+                    # side_c = trapezium_dusk(7,20,380)
+                    
+                    # swirl region
+                    swirl = np.linspace(np.radians(112+shift),np.radians(155+shift),200)
+                    swirl2 = np.linspace(np.radians(155+shift),np.radians(185+shift),200)
+                    swirl3 = np.linspace(np.radians(185+shift),np.radians(190+shift),200)
+                    swirl4 = np.linspace(np.radians(190+shift),np.radians(112+shift),200)
+                    swirl_linee = np.linspace(7,17,200)#(3,17,200)
+                    swirl_linee2 = np.linspace(17,18,200)
+                    swirl_linee3 = np.linspace(18,10,200)
+                    swirl_linee4 = np.linspace(10,7,200)
+                    
+                    # dusk region
+                    active_line = np.linspace(3,22,200)
+                    active_line2 = np.linspace(22,3,200)
+                    updusk = np.linspace(np.radians(205+shift),np.radians(185+shift),200) #top of region line
+                    
+                    # dusk1 = np.linspace(np.radians(190+shift),np.radians(210+shift),200)
+                    # dusk2 = np.linspace(np.radians(210+shift),np.radians(238.36+shift),200)
+                    # dusk3 = np.linspace(np.radians(190+shift),np.radians(218.36+shift),200)
+                    # dusk4 = np.linspace(np.radians(238.36+shift),np.radians(218.38+shift),200)
+                    
+                    dusk1 = np.linspace(np.radians(220+shift),np.radians(192.5+shift),200)
+                    dusk2 = np.linspace(np.radians(192.5+shift),np.radians(200+shift),200)
+                    dusk3 = np.linspace(np.radians(200+shift),np.radians(220+shift),200)
+                    dusk4 = np.linspace(np.radians(220+shift),np.radians(230+shift),200)
+                    dusk5 = np.linspace(np.radians(230+shift),np.radians(220+shift),200)
+                    
+                    dusk1_2 = np.linspace(15,20,200)
+                    dusk2_2 = np.linspace(20,30,200)
+                    dusk3_2 = np.linspace(30,20,200)
+                    dusk4_2 = np.linspace(20,15,200)
+        
+                    
+                    # noon region
+                    lon_noon = np.linspace(np.radians(192+shift),np.radians(154+shift),200)
+                    downlat_noon = np.linspace(22, 28, 200)
+                    downlat_noon2 = np.linspace(18, 24, 200)
+                    crosslat_noon = np.linspace(22,18,200)
+                    crosslat_noon2 = np.linspace(28,24,200)
+                    
+                    
+                    # dusk active boundary
+                    # plt.plot(200*[np.radians(185+shift)],active_line, color='khaki', linestyle='-', lw=1.5, label="Dusk Active Region")
+                    # plt.plot(200*[np.radians(205+shift)],active_line2, color='khaki', linestyle='-',lw=1.5)
+                    # plt.plot(updusk,200*[22], color='khaki', linestyle='-',lw=1.5)
+                    # plt.plot(updusk,200*[3], color='khaki', linestyle='-',lw=1.5)
+                    plt.plot(dusk1,dusk1_2,color='khaki', linestyle='-', lw=1.5, label="Dusk Active Region")
+                    plt.plot(dusk2,dusk2_2,color='khaki', linestyle='-', lw=1.5)
+                    plt.plot(dusk3,dusk3_2,color='khaki', linestyle='-', lw=1.5)
+                    plt.plot(dusk4,dusk4_2,color='khaki', linestyle='-', lw=1.5)
+                    plt.plot(dusk5,200*[15],color='khaki', linestyle='-', lw=1.5)
+                    
+                    # noon region
+                    plt.plot(lon_noon,crosslat_noon,'c-',lw=1.5,label="Noon Active Region")
+                    plt.plot(lon_noon,crosslat_noon2,'c-',lw=1.5)
+                    plt.plot(200*[np.radians(154+shift)],downlat_noon2,'c-',lw=1.5)
+                    plt.plot(200*[np.radians(192+shift)],downlat_noon,'c-',lw=1.5)
+                
+                    
+                    # swirl region
+                    plt.plot(swirl,swirl_linee, color='plum',linestyle='--', lw=1,label="Swirl Region")
+                    plt.plot(swirl2,swirl_linee2, color='plum',linestyle='--', lw=1)
+                    plt.plot(swirl3,swirl_linee3, color='plum',linestyle='--', lw=1)
+                    plt.plot(swirl4,swirl_linee4,color='plum',linestyle='--',lw=1)
+                    
+                    
+                    
+                    # plt.plot(swirls,swirl_line,color='plum',linestyle='--', lw=2)
+                    # plt.plot(swirls2,swirl_line2,color='plum',linestyle='--', lw=2)
+                    # plt.plot(swirls3,swirl_line3,color='plum',linestyle='--', lw=2)
+                    # plt.plot(200*[np.radians(90+shift)], border1,color='plum',linestyle='--', lw=2)
+                    # plt.plot(200*[np.radians(270+shift)],border2,color='plum',linestyle='--', lw=2)
+                    # plt.plot(border3,200*[21],color='plum',linestyle='--', lw=2)
+                    
+                    # plt.plot(dusks,dusk_line,color='khaki',linestyle='-', lw=1)
+                    # plt.plot(dusks2,dusk_line2,color='khaki',linestyle='-', lw=1)
+                    # plt.plot(dusks3,dusk_line3,color='khaki',linestyle='-', lw=1)
+                    # plt.plot(dusks4,dusk_line4,color='khaki',linestyle='-', lw=1)
+                    # plt.plot(dusks5,dusk_line5,color='khaki',linestyle='-', lw=1)
+                    # plt.plot(dusks6,dusk_line6,color='khaki',linestyle='-', lw=1)
+                    # plt.plot(200*[np.radians(270+shift)],border4,color='khaki',linestyle='-',lw=1)
+                    
+                    # plt.plot(noons,noon_line,'c-', lw=1)
+                    # plt.plot(noons2,noon_line2,'c-', lw=1)
+                    # plt.plot(200*[np.radians(160+shift)],border5,'c-',lw=1)
+                    # plt.plot(border6,200*[29],'c-',lw=1)
+                    # plt.plot(border7,200*[21],'c-',lw=1)
                     
                     plt.legend(facecolor='black', labelcolor= 'linecolor',bbox_to_anchor=[0, 0.9], loc='upper left')
                     
@@ -877,37 +981,82 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
                         print("regions not filled in")
                     
                 else:
-                    print('not visit 12 or 15')
+                    print('not High CML visit')
+                    
+                    
+                    # swirl region
+                    swirl = np.linspace(np.radians(100+shift),np.radians(143+shift),200)
+                    swirl2 = np.linspace(np.radians(143+shift),np.radians(173+shift),200)
+                    swirl3 = np.linspace(np.radians(173+shift),np.radians(177+shift),200)
+                    swirl4 = np.linspace(np.radians(178+shift),np.radians(100+shift),200)
+                    swirl_linee = np.linspace(7,17,200)
+                    swirl_linee2 = np.linspace(17,18,200)
+                    swirl_linee3 = np.linspace(18,10,200)
+                    swirl_linee4 = np.linspace(10,7,200)
+                    
+                    # swirl_linee = np.linspace(3,17,200)
+                    # swirl_linee2 = np.linspace(17,18,200)
+                    # swirl_linee3 = np.linspace(18,4,200)
+                    # swirl_linee4 = np.linspace(4,3,200)
+                    
+                    # dusk region
+                    active_line = np.linspace(3,22,200)
+                    active_line2 = np.linspace(22,3,200)
+                    updusk = np.linspace(np.radians(205+shift),np.radians(185+shift),200) #top of region line
+                    
+                    # noon region
+                    lon_noon = np.linspace(np.radians(202+shift),np.radians(175+shift),200)
+                    downlat_noon = np.linspace(23, 29, 200)
+                    #boundary = np.linspace(np.radians(185+shift),np.radians(172+shift),200)
+                    
+                    
                     # dusk active boundary
-                    plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 10], color='khaki', linestyle='-', lw=1.5, label="Dusk Active Region")
-                    plt.plot([np.radians(188+shift), np.radians(188+shift)], [24, 16], color='khaki', linestyle='-',lw=1.5)
-                    plt.plot([np.radians(100+shift), np.radians(100+shift)], [4, 0], color='khaki', linestyle='-',lw=1.5)
-                    #plt.plot(active, 200*[10], 'r-', lw=1.5)
-                    plt.plot(boundary, 200*[24], color='khaki', linestyle='-', lw=2.5)
-                    plt.plot(active, active_line, color='khaki', linestyle='-', lw=1.5)
-                    plt.plot(active_2, active_line2, color='khaki', linestyle='-', lw=1.5)
-                    # plt.plot(active_3, active_line3, 'r-', lw=1.5)
+                    plt.plot(200*[np.radians(185+shift)],active_line, color='khaki', linestyle='-', lw=1.5, label="Dusk Active Region")
+                    plt.plot(200*[np.radians(205+shift)],active_line2, color='khaki', linestyle='-',lw=1.5)
+                    plt.plot(updusk,200*[22], color='khaki', linestyle='-',lw=1.5)
+                    plt.plot(updusk,200*[3], color='khaki', linestyle='-',lw=1.5)
                     
-                     # #LHS / 'dawn' arc
-                     # plt.plot([np.radians(100+shift), np.radians(100+shift)], [20, 11], 'k-', lw=1) #130
-                     # plt.plot([np.radians(180+shift), np.radians(180+shift)], [33, 39], 'k-', lw=1) # changed from 54 to 39 to close the polygon
-                     # plt.plot(lon_dawn, uplat_dawn, 'k-', lw=1)
-                     # plt.plot(lon_dawn, downlat_dawn, 'k-', lw=1)
-                    
-                    # noon active boundary
-                    plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 28], 'c-', lw=1.5, label="Noon Active Region")    
-                    plt.plot([np.radians(170+shift), np.radians(170+shift)], [24, 28], 'c-', lw=1.5)
-                    plt.plot(lon_noon_a, downlat_noon_a, 'c-', lw=1.5)
-                    plt.plot(lon_noon_b, downlat_noon_b, 'c-', lw=1.5)
-                    plt.plot(updusk, 200*[24], 'c-', lw=1.5)
-                    
-                    #swirl region
-                    plt.plot([np.radians(188+shift), np.radians(188+shift)], [24, 16], color='plum',linestyle='--', lw=1, label="Swirl Region")
-                    plt.plot([np.radians(100+shift), np.radians(100+shift)], [6, 4], color='plum',linestyle='--', lw=1)
+                    # noon region
+                    plt.plot(lon_noon,200*[23],'c-',lw=1.5,label="Noon Active Region")
+                    plt.plot(lon_noon,200*[29],'c-',lw=1.5)
+                    plt.plot(200*[np.radians(175+shift)],downlat_noon,'c-',lw=1.5)
+                    plt.plot(200*[np.radians(202+shift)],downlat_noon,'c-',lw=1.5)
+        
             
-                    plt.plot(upnoon, 200*[24],color='plum',linestyle='--',lw=1)
-                    plt.plot(swirl,swirl_linee, color='plum',linestyle='--', lw=1)
-                    plt.plot(swirl2, swirl_linee2, color='plum',linestyle='--', lw=1)
+                    # swirl region
+                    plt.plot(swirl,swirl_linee, color='plum',linestyle='--', lw=1,label="Swirl Region")
+                    plt.plot(swirl2,swirl_linee2, color='plum',linestyle='--', lw=1)
+                    plt.plot(swirl3,swirl_linee3, color='plum',linestyle='--', lw=1)
+                    plt.plot(swirl4,swirl_linee4,color='plum',linestyle='--',lw=1)
+                    
+                    
+                    # ------- old ------
+                    
+                    # # dusk active boundary
+                    # plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 10], color='khaki', linestyle='-', lw=1.5, label="Dusk Active Region")
+                    # plt.plot([np.radians(188+shift), np.radians(188+shift)], [24, 16], color='khaki', linestyle='-',lw=1.5)
+                    # plt.plot([np.radians(100+shift), np.radians(100+shift)], [4, 0], color='khaki', linestyle='-',lw=1.5)
+                    # #plt.plot(active, 200*[10], 'r-', lw=1.5)
+                    # plt.plot(boundary, 200*[24], color='khaki', linestyle='-', lw=2.5)
+                    # plt.plot(active, active_line, color='khaki', linestyle='-', lw=1.5)
+                    # plt.plot(active_2, active_line2, color='khaki', linestyle='-', lw=1.5)
+                    # # plt.plot(active_3, active_line3, 'r-', lw=1.5)
+                   
+                
+                    # # noon active boundary
+                    # plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 28], 'c-', lw=1.5, label="Noon Active Region")    
+                    # plt.plot([np.radians(170+shift), np.radians(170+shift)], [24, 28], 'c-', lw=1.5)
+                    # plt.plot(lon_noon_a, downlat_noon_a, 'c-', lw=1.5)
+                    # plt.plot(lon_noon_b, downlat_noon_b, 'c-', lw=1.5)
+                    # plt.plot(updusk, 200*[24], 'c-', lw=1.5)
+                    
+                    # #swirl region
+                    # plt.plot([np.radians(188+shift), np.radians(188+shift)], [24, 16], color='plum',linestyle='--', lw=1, label="Swirl Region")
+                    # plt.plot([np.radians(100+shift), np.radians(100+shift)], [6, 4], color='plum',linestyle='--', lw=1)
+            
+                    # plt.plot(upnoon, 200*[24],color='plum',linestyle='--',lw=1)
+                    # plt.plot(swirl,swirl_linee, color='plum',linestyle='--', lw=1)
+                    # plt.plot(swirl2, swirl_linee2, color='plum',linestyle='--', lw=1)
                     
                     
                     
@@ -979,38 +1128,38 @@ def moind(aa, visit, n, header, filename, prefix, dpi = 300, crop = 1, rlim = 30
         
         # regions for the LT fixed case - would this even work?
         elif fixed == 'lt':
-            #dusk active boundary
-            plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 10], color='khaki', linestyle='-', lw=1.5, label="Dusk Active Region")
-            plt.plot([np.radians(188+shift), np.radians(188+shift)], [24, 16], color='khaki', linestyle='-',lw=1.5)
-            plt.plot([np.radians(100+shift), np.radians(100+shift)], [3, 0], color='khaki', linestyle='-',lw=1.5)
-            #plt.plot(active, 200*[10], 'r-', lw=1.5)
-            plt.plot(boundary, 200*[24], color='khaki', linestyle='-', lw=2.5)
-            plt.plot(active, active_line, color='khaki', linestyle='-', lw=1.5)
-            plt.plot(active_2, active_line2, color='khaki', linestyle='-', lw=1.5)
-            # plt.plot(active_3, active_line3, 'r-', lw=1.5)
+            # #dusk active boundary
+            # plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 10], color='khaki', linestyle='-', lw=1.5, label="Dusk Active Region")
+            # plt.plot([np.radians(188+shift), np.radians(188+shift)], [24, 16], color='khaki', linestyle='-',lw=1.5)
+            # plt.plot([np.radians(100+shift), np.radians(100+shift)], [3, 0], color='khaki', linestyle='-',lw=1.5)
+            # #plt.plot(active, 200*[10], 'r-', lw=1.5)
+            # plt.plot(boundary, 200*[24], color='khaki', linestyle='-', lw=2.5)
+            # plt.plot(active, active_line, color='khaki', linestyle='-', lw=1.5)
+            # plt.plot(active_2, active_line2, color='khaki', linestyle='-', lw=1.5)
+            # # plt.plot(active_3, active_line3, 'r-', lw=1.5)
             
-            # #LHS / 'dawn' arc
-            # plt.plot([np.radians(100+shift), np.radians(100+shift)], [20, 11], 'k-', lw=1) #130
-            # plt.plot([np.radians(180+shift), np.radians(180+shift)], [33, 39], 'k-', lw=1) # changed from 54 to 39 to close the polygon
-            # plt.plot(lon_dawn, uplat_dawn, 'k-', lw=1)
-            # plt.plot(lon_dawn, downlat_dawn, 'k-', lw=1)
+            # # #LHS / 'dawn' arc
+            # # plt.plot([np.radians(100+shift), np.radians(100+shift)], [20, 11], 'k-', lw=1) #130
+            # # plt.plot([np.radians(180+shift), np.radians(180+shift)], [33, 39], 'k-', lw=1) # changed from 54 to 39 to close the polygon
+            # # plt.plot(lon_dawn, uplat_dawn, 'k-', lw=1)
+            # # plt.plot(lon_dawn, downlat_dawn, 'k-', lw=1)
             
-            # noon active boundary
-            plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 28], 'c-', lw=1.5, label="Noon Active Region")    
-            plt.plot([np.radians(170+shift), np.radians(170+shift)], [24, 28], 'c-', lw=1.5)
-            plt.plot(lon_noon_a, downlat_noon_a, 'c-', lw=1.5)
-            plt.plot(lon_noon_b, downlat_noon_b, 'c-', lw=1.5)
-            plt.plot(updusk, 200*[24], 'c-', lw=1.5)
+            # # noon active boundary
+            # plt.plot([np.radians(205+shift), np.radians(205+shift)], [24, 28], 'c-', lw=1.5, label="Noon Active Region")    
+            # plt.plot([np.radians(170+shift), np.radians(170+shift)], [24, 28], 'c-', lw=1.5)
+            # plt.plot(lon_noon_a, downlat_noon_a, 'c-', lw=1.5)
+            # plt.plot(lon_noon_b, downlat_noon_b, 'c-', lw=1.5)
+            # plt.plot(updusk, 200*[24], 'c-', lw=1.5)
             
-            #swirl region
-            plt.plot([np.radians(185+shift), np.radians(185+shift)], [22, 16], color='plum',linestyle='--', lw=1, label="Swirl Region")
-            plt.plot([np.radians(100+shift), np.radians(100+shift)], [6, 4], color='plum',linestyle='--', lw=1)
+            # #swirl region
+            # plt.plot([np.radians(185+shift), np.radians(185+shift)], [22, 16], color='plum',linestyle='--', lw=1, label="Swirl Region")
+            # plt.plot([np.radians(100+shift), np.radians(100+shift)], [6, 4], color='plum',linestyle='--', lw=1)
     
-            plt.plot(upnoon, 200*[22],color='plum',linestyle='--',lw=1)
-            plt.plot(swirl,swirl_line, color='plum',linestyle='--', lw=1)
-            plt.plot(swirl2, swirl_line2, color='plum',linestyle='--', lw=1)
+            # plt.plot(upnoon, 200*[22],color='plum',linestyle='--',lw=1)
+            # plt.plot(swirl,swirl_line, color='plum',linestyle='--', lw=1)
+            # plt.plot(swirl2, swirl_line2, color='plum',linestyle='--', lw=1)
             
-            plt.legend(facecolor='black', labelcolor= 'linecolor',bbox_to_anchor=[0, 0.8], loc='upper left')
+            # plt.legend(facecolor='black', labelcolor= 'linecolor',bbox_to_anchor=[0, 0.8], loc='upper left')
             
             # #RHS / 'dusk' ME 
             # plt.plot([np.radians(270+shift),np.radians(270+shift)],[0,9],'m-',lw=1)
@@ -1410,6 +1559,8 @@ whole_region_box = not bool(input('Show Whole Auroral Region Boxed (Default: Ent
 
 # the only part you have to add manually is the particular set of visit numbers you want
 # to plot. If you want only one that is perfectly fine but it must be IN a list
-lista = ['26','27','28','24','25','34','35']#, '05', '17']#,'10','11','12','13','15','16','18','19','20','21'] #for example, or lista = ['0v'] 'v04','v10','v11'
-
+#lista = ['02','03','04','05','08','09','10','11','16','17','18','19','20','21','24','25','27','28','34','35']#lista = ['02','03','04','05','08','09','10','11','16','17','18','19','20','21','24','25','27','28','34','35']#['01','12','15','26']##for example, or lista = ['0v'] 'v04','v10','v11'
+lista = ['01']
 multigif(lista, year, prefix, extra, time, radius, moonfp, full, fixed, output, regions, whole_region_box, True) # this is what I need to call
+
+    
