@@ -1,39 +1,106 @@
-"""
-Created on Wed Mar  6 13:39:13 2024
+#=== originally: HST_emission_power.py ========================================
+# Script to read in projected/unprojected HST STIS .fits images, define a
+# spatial region, and calculate the UV emission power.
+#
+# Translation between unprojected/projected images is partly handled by IDL
+# pipeline legacy code from Boston University, and partly from python code
+# provided by Jonny Nichols at Leicester. (broject function)
 
-@author: hannah
+# Emission power computed as per Gustin+ 2012.
 
-script that converts intensities to power values and can write out to several dataframes
+# Should allow e.g., calculation of total auroral oval UV emission power using
+# statistical auroral boundaries, planetary auroral comparisons, or
+# application to Voronoi image segmentations, etc.
 
-this needs re-looking at as currently requires uncommenting and commenting out sections to work
-it is also unclear exactly what dataframes are being saved to what
-"""
-import numpy as np
-import os
+# === Base code: Joe Kinrade - 8 January 2025 =================================
+# Modified by Hannah Joyce to load in and process on a per visit basis as well
+# as to mask out specific auroral regions to extract power from
+
+from astropy.io import fits
 import matplotlib.pyplot as plt
-import matplotlib.patheffects as patheffects
 import numpy as np
-from pathlib import Path
+from matplotlib.colors import LogNorm
+import pandas as pd
 from dateutil.parser import parse
 import datetime as dt
-import pandas as pd
-from matplotlib.colors import LogNorm
-from reading_mfp import moonfploc
-from scipy import stats
-import glob
-import imageio
-from astropy.io import fits
-from tqdm import tqdm
+import matplotlib.patheffects as pe
+from matplotlib.path import Path
+import spiceypy as spice
+#spice.furnsh("/Users/joe/data/SPICE/cassini_generic.mk") # SPICE kernels
+#import time_conversions as tc
+import collections
 from matplotlib import path
 import scipy.constants as c
-import rayleigh_to_power as rtp
+# import collections.abc as collections # If using Python version 3.10 and above
+from scipy import signal
+from tqdm import tqdm
+import glob
+
+# leap seconds kernal
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/naif0012.tls")
+# this one is for iau - planetary constants
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/pck00010.tpc")
+# this one has coordinate systems in it
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/juno_v12.tf")
+# kernal for planet locations
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/de436s.bsp")
+# hst kernal
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/hst.bsp")
+
+# ------------------------------------------------------------------------------
+# Nichols constants:
+au_to_km = 1.495978707e8
+dpr = 180. / np.pi
+autokm = 1.4959787066E8
+
+# Nichols spice stuff:
+planets = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn',
+           'Uranus', 'Neptune', 'Pluto', 'Vulcan']
+inx = planets.index('Jupiter')
+naifobj = 99 + (inx + 1) * 100
+frame = 'IAU_' + 'Jupiter'
+radii = spice.bodvcd(naifobj, 'RADII', 3)
+#print(radii)
+rpeqkm = radii[1][0]
+rpplkm = radii[1][2]
+oblt = 1. - rpplkm / rpeqkm
+obt = oblt
+
+# Hardwire epoch
+epoch = 'J2000'
+corr = 'LT'
+
+# -----------------------------------------------------------------------------
+
+root_folder = '/Users/hannah/OneDrive - Lancaster University/aurora/'
+
+#visit_list = ['02','03','04','05','08','09','10','11','16','17','18','19','20','21','24','25','27','28','34','35']#['04','05','08','09','10','11','12','15','16','17','18','19','20','21']#'04','05','08','09','10','11','12','15','16','17','18','19','20','21'] #'04','05','08','09','10','11','12','13','15','16','17','18','19','20','21'
+#visit_list = ['01','12','15','26']
+visit_list = ['01'] # start with 18 in morning
+visit='01'
+
+def ignore_nan_counter(data):
+    count = 0
+    for i in data:
+        if not np.isnan(i):
+            count+=1
+    return count
+
+# This function turns python datetime into spice/ET time - From time_conversions.py
+# Input: datetime 1-D array/list or single value
+def datetime2et(pytimes):
+    isscalar = False
+    if not isinstance(pytimes, collections.Iterable):
+        isscalar = True
+        pytimes = [pytimes]
+    utctimes = np.array([dt.strftime(iii, '%Y-%m-%d, %H:%M:%S.%f') for iii in pytimes])
+    ettimes = np.array([spice.utc2et(iii) for iii in utctimes])
+    if isscalar:
+        return np.ndarray.item(ettimes)
+    else:
+        return ettimes
 
 
-visit_list = ['03']#['02','03','04','05','08','09','10','16','17','18','19','20','21','24','25','27','34','35']#['04','05','08','09','10','11','12','15','16','17','18','19','20','21']#'04','05','08','09','10','11','12','15','16','17','18','19','20','21'] #'04','05','08','09','10','11','12','13','15','16','17','18','19','20','21'
-visit='03'
-
-
-# create class to handle sorting pixels into regions
 class shape():
     
     def __init__(self, verticies):
@@ -60,7 +127,7 @@ class shape():
         
         return
     
-    def insert_points(self, lats, lons, power):
+    def insert_points(self, lats, lons, data):
         
         """
         Saves pixels whoes latitudes/longitudes are contained withing
@@ -82,531 +149,829 @@ class shape():
         """
 
         # check shapes are equal
-        if lats.shape != power.shape:
+        if lats.shape != data.shape:
             raise ValueError("lats and intensities must be same shape")
-        if lons.shape != power.shape:
+        if lons.shape != data.shape:
             raise ValueError("lons and intensities must be same shape")
         if lats.shape != lons.shape:
             raise ValueError("lats and lons must be same shape")
         
         # arange coordinates for use in path function
         coords = np.vstack([lats.flatten(), lons.flatten()]).T
-        
+        #breakpoint()
+
         # check if points within polygon
         poly = path.Path(self.verticies)
         inside_mask = poly.contains_points(coords) # this is already making the mask 
         
-        # mask = np.ma.masked_where(inside_mask)
-        # print(np.where(inside_mask)) 
-        
-        # false_array = np.zeros((720,1440), dtype=bool)
-        
-        '''
-        set inside mask to true? + then multiply image by the mask??????
-        I honestly don't know need to look into this with a better frame of mind
-        '''
-    
-        
-        '''
-        need to make a self.mask function where all values False in inside_mask are set to np.nan
-        or just export the mask and do this outside?
-        
-        ie can get self.mask = inside_mask 
-        
-        then on outside it'll be swirl.mask to call the mask?
-        and then we can be like if false set to np.nan
-        not sure this will directly work as other values will then be true but then we can overlay maybe?
-        '''
-        
-        # store intensities to self
-        self.power = power.flatten()[inside_mask]
+        # store intensities to self - just in case
+        self.data = data.flatten()[inside_mask]
         self.lats = lats.flatten()[inside_mask]
         self.lons = lons.flatten()[inside_mask]
         
-        return
+        return inside_mask.reshape(720,1440)
     
+    
+def apply_mask(region,image,visit,plotting): # needs region, im_flip and visit, 
+    # this bit establishes what type of visit we have and what coordinates to use  
+
+    if  visit == '01' or visit == '12' or visit == '15' or visit == '26':
+        print('Using High CML Regions')
+        # dusk_active_region = [[20,192.25],[30,200],[20,220],[15,230],[15,220]]
+        # swirl_region = [[6.75,111],[17,155],[18,185],[10,190]]
+        # noon_active_region = [[18,154],[24,154],[28,192],[22,192]]
+        
+        dusk_active_region = [[20,192.5],[30,200],[20,220],[15,230],[15,220]]
+        swirl_region = [[7,112],[17,155],[18,185],[10,190]] #[7,112],[17,155],[18,185],[10,190]
+        noon_active_region = [[18,154],[24,154],[28,192],[22,192]]
+        
+        test_region = [[15,210],[15,230],[25,230],[25,210]]#10,179.75],[10,200],[20,200],[20,180]
+        
+        test = shape(test_region)
+        
+        # dusk_active_region = [[20,167.25],[30,160],[20,140],[15,130],[15,140]]
+        # swirl_region = [[2.75,247],[17,205],[18,175],[4,170]]
+        # noon_active_region = [[18,206],[24,206],[28,168],[22,168]]
 
 
-# actual function to call to cut out regions
-def box_cutter(file,n,visit,visit_name, plotting,histogram):
-    if __name__ == "__main__":
-     
-        '''
-        doy = filename[-39:-36]
-        tinti = int(filename[-25:-22])
-        tint = str(tinti)
-        hora = filename[11:19]
-        year = filename[4:6]
-        visit = 'v' + str(v) + '_20' + str(year)
+    else:
+        print('Using Standard CML Regions')
+        # noon_active_region = [[23,174.75],[29,174.75],[29,202],[23,202]]
+        # dusk_active_region = [[3,184.75],[22,184.75],[22,205],[3,205]]
+        # swirl_region = [[6.75,99],[17,143],[18,173],[10,178]]
+        
+        noon_active_region = [[23,175],[29,175],[29,202],[23,202]]
+        dusk_active_region = [[2,185],[22,185],[22,205],[3,205]]
+        swirl_region = [[7,100],[17,143],[18,173],[10,178]] #[7,100],[17,143],[18,173],[10,178]
+        
+        test_region = [[15,210],[15,230],[25,230],[25,210]]
+        
+        test = shape(test_region)
+    
+        # swirl_region = [[2.75,261],[17,217],[18,175],[4,182]]
+        # noon_active_region = [[23,184.75],[29,184.75],[29,158],[23,158]]
+        # dusk_active_region = [[3,174.75],[22,174.75],[22,155],[3,155]]
+        
+    
+    noon_active = shape(noon_active_region)
+    dusk_active = shape(dusk_active_region)
+    swirl = shape(swirl_region)
 
-        # one of the two titles for every plot
-        plt.suptitle(f'Visit {prefix}{v} (DOY: {doy}/20{year}, {hora[0:2]}:{hora[3:5]}:{hora[6:]})', y=0.99, fontsize=14)
-        
-        we want DOYTHrMinSec
-         filename is DOY-Hour-Min-Sec 
-        '''
-        
-        # open intensities file
-        infolist = fits.open(file)
-        header = infolist[1].header
-        image = infolist[1].data
-        
-        cml = header['CML']
+    lats1 = np.arange(0,180,0.25)
+    lons1 = np.arange(0,360,0.25)
+    
+    # make 2D grid of lat/lons
+    llons, llats = np.meshgrid(lons1, lats1)
+    
+    image_extract = image
+
+    lons = np.arange(0,1440,1)
+    lats = np.arange(0,160,1)   # 0-40 degrees colat in image pixel res
+    
+    if region == 'test' or region == 'Test':
+        print('Masking Test Region')
+        mask_test = test.insert_points(llats, llons, image)
+        #mask_noon160 = mask_noon[0:160,:]
         
         #breakpoint()
         
-        # jupiter times
+        if plotting == 'yes':
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons,lats,image_extract[0:160,:],cmap='cubehelix',
+                           vmin=0.,vmax=30.)
+            
+            coord1 = [40,720]
+            coord2 = [40,800]
+            coord3 = [80,800]
+            coord4 = [80,720]
+            
+            # Overplot the region of interest, e.g. a lat-lon box here:
+            plt.plot([coord1[1],coord2[1],coord3[1],coord4[1],coord1[1]],  # corner A repeated to
+                     [coord1[0],coord2[0],coord3[0],coord4[0],coord1[0]],  # close the box.
+                     color='red',linewidth=3.)
+            plt.show()
+            
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(mask_test, origin='lower')  # zoom to see tiny squares! #roi mask
+            plt.title('Mask in image space')
+            plt.show()
+            
+        image_extract[mask_test==False] = np.nan
+        
+        if plotting == 'yes':
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons,lats,image_extract[0:160,:],cmap='cubehelix',
+                           vmin=0.,vmax=30.)
+            plt.title('Image masked off by the ROI')
+            plt.show()
+        
+        im_full          = np.zeros((720,1440))        # new array full of nans
+        im_full[0:160,:] = image_extract[0:160,:] #roi_im_full[0:160,:]
+        
+        # -------------
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(im_full, origin='lower')
+            plt.title('ROI intensities in full image space')
+            plt.show()
+    
+    elif region == 'noon' or region == 'Noon':
+        print('Masking Noon Active Region')
+        mask_noon = noon_active.insert_points(llats, llons, image)
+        #mask_noon160 = mask_noon[0:160,:]
+        
+        if plotting == 'yes':
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons1,lats1[0:160],image_extract[0:160,:],cmap='cubehelix',
+                           vmin=0.,vmax=30.)
+            
+            coord1 = noon_active_region[0]
+            coord2 = noon_active_region[1]
+            coord3 = noon_active_region[2]
+            coord4 = noon_active_region[3]
+            
+            # Overplot the region of interest, e.g. a lat-lon box here:
+            plt.plot([coord1[1],coord2[1],coord3[1],coord4[1],coord1[1]],  # corner A repeated to
+                     [coord1[0],coord2[0],coord3[0],coord4[0],coord1[0]],  # close the box.
+                     color='red',linewidth=3.)
+            plt.show()
+            
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(mask_noon, origin='lower')  # zoom to see tiny squares! #roi mask
+            plt.title('Mask in image space')
+            plt.show()
+            
+        image_extract[mask_noon==False] = np.nan
+        
+        noon_px = noon_active.data
+        
+        tot_size = len(noon_px)
+        num_px = ignore_nan_counter(noon_px)
+        
+        if plotting == 'yes':
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons,lats,image_extract[0:160,:],cmap='cubehelix',
+                           vmin=0.,vmax=1000.)
+            plt.title('Image masked off by the ROI')
+            plt.show()
+        
+        im_full          = np.zeros((720,1440))        # new array full of nans
+        im_full[0:160,:] = image_extract[0:160,:] #roi_im_full[0:160,:]
+        
+        # -------------
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(im_full, origin='lower')
+            plt.title('ROI intensities in full image space')
+            plt.show()
+            
+
+    elif region == 'dusk' or region == 'Dusk':
+        print('Masking Dusk Active Region')
+        mask_dusk = dusk_active.insert_points(llats, llons, image)
+        #mask_dusk160 = mask_dusk[0:160,:]
+            
+        if plotting == 'yes':
+            if visit == '01' or visit == '12' or visit == '15' or 'visit' == '26':
+                plt.figure(figsize=(8,6))
+                plt.pcolormesh(lons1,lats1[0:160],image_extract[0:160,:],cmap='cubehelix',
+                               vmin=0.,vmax=1000.)
+                plt.xlabel('SIII longitude')
+                plt.ylabel('co-latitude')
+                
+                coord1 = dusk_active_region[0]
+                coord2 = dusk_active_region[1]
+                coord3 = dusk_active_region[2]
+                coord4 = dusk_active_region[3]
+                
+                # Overplot the region of interest, e.g. a lat-lon box here:
+                plt.plot([coord1[1],coord2[1],coord3[1],coord4[1],coord1[1]],  # corner A repeated to
+                         [coord1[0],coord2[0],coord3[0],coord4[0],coord1[0]],  # close the box.
+                         color='red',linewidth=3.)
+                plt.show()
+            else:
+                plt.figure(figsize=(8,6))
+                plt.pcolormesh(lons1,lats1,image_extract,cmap='cubehelix',
+                               vmin=0.,vmax=30.)
+                
+                coord1 = dusk_active_region[0]
+                coord2 = dusk_active_region[1]
+                coord3 = dusk_active_region[2]
+                coord4 = dusk_active_region[3]
+                #coord5 = dusk_active_region[4]
+                
+                # Overplot the region of interest, e.g. a lat-lon box here:
+                plt.plot([coord1[1],coord2[1],coord3[1],coord4[1],coord1[1]],  # corner A repeated to
+                         [coord1[0],coord2[0],coord3[0],coord4[0],coord1[0]],  # close the box.
+                         color='red',linewidth=3.)
+                plt.show()
+            
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(mask_dusk, origin='lower')  # zoom to see tiny squares! #roi mask
+            plt.title('Mask in image space')
+            plt.show()
+            
+        image_extract[mask_dusk==False] = np.nan
+        
+        dusk_px = dusk_active.data
+        
+        tot_size = len(dusk_px)
+        num_px = ignore_nan_counter(dusk_px)
+        
+        if plotting == 'yes':
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons,lats,image_extract[0:160,:],cmap='cubehelix',
+                           vmin=0.,vmax=1000.)
+            plt.title('Image masked off by the ROI')
+            plt.show()
+        
+        im_full          = np.zeros((720,1440))        # new array full of nans
+        im_full[0:160,:] = image_extract[0:160,:] #roi_im_full[0:160,:]
+        
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(im_full, origin='lower')
+            plt.title('ROI intensities in full image space')
+            plt.show()
+            
+        # dar_boundary = path.Path([(20,192.25), (30,200), (20,220), (15,230), (15,220), (20,192.25)]) 
+        # testlons = np.arange(0,360,0.25)
+        # testcolats = np.arange(0,40,0.25)
+        # llons, llats = np.meshgrid(testlons, testcolats) # checked correct
+        # coords = np.vstack([llats.flatten(), llons.flatten()]).T
+        # dar_mask = dar_boundary.contains_points(coords) # ([[llats], [llons]])
+        # dar_mask_2D = dar_mask.reshape(160,1440)
+
+        # roi_mask_full          = np.zeros((720,1440))
+        # roi_mask_full[0:160,:] = dar_mask_2D
+        
+
+    elif region == 'swirl' or region == 'Swirl':
+        print('Masking Swirl Region')
+        mask_swirl = swirl.insert_points(llats, llons, image)
+        #mask_swirl160 = mask_swirl[0:160,:]
+        
+        if plotting == 'yes':
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons1,lats1,image_extract,cmap='cubehelix',
+                           vmin=0.,vmax=30.)
+            
+            coord1 = swirl_region[0]
+            coord2 = swirl_region[1]
+            coord3 = swirl_region[2]
+            coord4 = swirl_region[3]
+            
+            # Overplot the region of interest, e.g. a lat-lon box here:
+            plt.plot([coord1[1],coord2[1],coord3[1],coord4[1],coord1[1]],  # corner A repeated to
+                     [coord1[0],coord2[0],coord3[0],coord4[0],coord1[0]],  # close the box.
+                     color='red',linewidth=3.)
+            plt.show()
+            
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(mask_swirl, origin='lower')  # zoom to see tiny squares! #roi mask
+            plt.title('Mask in image space')
+            plt.show()
+            
+        image_extract[mask_swirl==False] = np.nan
+        
+        swirl_px = swirl.data
+        
+        tot_size = len(swirl_px)
+        num_px = ignore_nan_counter(swirl_px)
+        
+        #breakpoint()
+        
+        if plotting == 'yes':
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons,lats,image_extract[0:160,:],cmap='cubehelix',
+                           vmin=0.,vmax=1000.)
+            plt.title('Image masked off by the ROI')
+            plt.show()
+        
+        im_full          = np.zeros((720,1440))        # new array full of nans
+        im_full[0:160,:] = image_extract[0:160,:] #roi_im_full[0:160,:]
+        
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(im_full, origin='lower')
+            plt.title('ROI intensities in full image space')
+            plt.show()
+        
+    else:
+        print('Not a Valid Region')
+    
+    #breakpoint()
+        
+    return im_full, tot_size, num_px #roi_mask_full
+    
+        
+# actual function to call to cut out regions
+def image_processing(file,n,visit,visit_name,plotting):
+    if __name__ == "__main__":
+
+        # open intensities file
+        infolist = fits.open(file)
+        header = infolist[1].header
+        image_data = infolist[1].data
+        
+        # hdu_list = fits.open(file)  # opens the FITS files, accessing data plus header info
+        # hdu_list.info()                      # print file information
+
+        # accessing specific header info entries:
+        exp_time  = header['EXPT']
+        aperture  = header['APERTURE']   # filter type - important as it determines the Gustin conversion factors for intensity/counts/powers etc.
+        cml       = header['CML']
+        dece      = header['DECE']
+        hem       = header['HEMISPH']
+        # obt     = hdu_list[0].header['OBLT']       # can't see oblateness in the fits header?
+        dist_org  = header['DIST_ORG']   # Earth-planet distance in AU before reduction
+        pcx       = header['PCX']        # Planet centre pixel
+        pcy       = header['PCY']        # Planet centre pixel
+        nppa_org  = header['NPPA_ORG']   # North pole position angle before reduction
+        nppa      = header['NPPA']       # North pole position angle
+        pixsize   = header['PXSEC']    # Pixel size in arc seconds
+        pxsec     = pixsize                          # just matching a variable name here that's used in the broject function
+        dist      = header['DIST']       # Standard (scaled) Earth-planet distance in AU
+        dmeq_orig = header['DMEQ_ORG']   # Original diameter of planet equator in arcsecond
+        # ------------------------------------------------------------------------------
+        cts2kr    = header['CTS2KR']     # reciprocal of conversion factor in counts/sec/kR
+        
+        #breakpoint()
+        
+        # If 1 / conversion factor is ~3994, this implies a colour ratio of 1.10
+        # for Saturn with a STIS SrF2 image (see Gustin+ 2012 Table 1):
+        colour_ratio = 2.5 #1.10 for Saturn
+
+        # And this in turn means that the counts-per-second to total emitted power (Watts)
+        # conversion factor is 9.04e-10 (Gustin+2012 Table 2), for STIS SrF2:
+        gustin_conv_factor = 1.02e-9 #9.04e-10 for Saturn
+        gustin_conv_factor_swirl = 1.16e-09#(1.16 * 10**-9) 1.16 × 10−9
+        # "Conversion factor to be multiplied by the squared HST-planet distance (km)
+        # to determine the total emitted power (Watts) from observed counts per second."
+
+        # ------------------------------------------------------------------------------
+
+        # In some fits files (Jupiter), these 'delta' values are listed as DELRPKM in the header.
+        # If not (Saturn), it's hard-wired in here depending on the target planet (probably Saturn!).
+
+        deltas = {'Mars': 0., 'Jupiter': 240., 'Saturn': 1100., 'Uranus': 0.}   # auroral emission altitudes at homopause in km
+        delrpkm = deltas['Jupiter']
+        rpkm = rpeqkm                                # just matching a variable name here that's used in the broject function
+
+        # if find delrpkm fine, otherwise set some default 'deltas' as above. **********
+        # ------------------------------------------------------------------------------
+
+        # convert HST timestamp to time at Saturn using light travel time:
         start_time = parse(header['UDATE'])     # create datetime object
         try:
             dist_org = header['DIST_ORG']
             ltime = dist_org*c.au/c.c
             lighttime = dt.timedelta(seconds=ltime)
         except KeyError:
-            lighttime = dt.timedelta(seconds=2524.42) 
+            ltime = dt.timedelta(seconds=2524.42) 
+            
+        exposure = dt.timedelta(seconds=exp_time)
+        start_time_jup = start_time - lighttime          # correct for light travel time
+        end_time_jup = start_time_jup + exposure      # end of exposure time
+        mid_ex_jup = start_time_jup + (exposure/2.)   # mid-exposure time at Jupiter
+        mid_ex = start_time + (exposure/2.)                 # mid-exposure time at HST
         
-        time_date = start_time - lighttime  # correct for light travel time
+        # --------------- make polar projection plot -----------------
         
-        image_flip = np.flip(image,0)
-        image_final = image_flip[:(int((image.shape[0])/1)),:]
-                        # if using power conversion
-        powers, app_area, abs_area = rtp.rayleigh_to_power(image_final, n, visit)
-        #intensity = np.where(powers <= 0, np.nan, powers)
-        #print(powers)
-      
-        lats = np.arange(0,180,0.25)
-        lons = np.arange(0,360,0.25)
-        
-        # make 2D grid of lat/lons
-        llons, llats = np.meshgrid(lons, lats)
-        
-        lon_flat = llons.flatten()
-        lat_flat = llats.flatten()
-        
-        lon_rad = np.radians(lon_flat)
-        lat_rad = np.radians(lat_flat)
+        if plotting == 'yes':
+            image_data = infolist[1].data
+            # make a quick-look plot to check image array content:
+            plt.figure()
+            plt.title('Image array in fits file.')
+            plt.imshow(image_data, cmap='cubehelix',origin='lower',vmin=1, vmax=1000)
+            plt.xlabel('longitude pixels')
+            plt.ylabel('co-latitude pixels')
+            # plt.colorbar()
+            cbar = plt.colorbar(pad=0.05)
+            cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
     
-        # define each region
-        # assign verticies to confine regions
-        # swirl = shape([[4,100],[6,100],[22,170],[22,185],[16,185]])
-        # #swirl = shape([[100,4],[100,6],[170,22],[185,22],[185,16]])
-        # noon_active = shape([[24,170],[28,170],[32,190],[28,205],[24,205]])
-        # #noon_active = shape([[170,24],[170,28],[190,32],[205,28],[205,24]])
-        # dusk_active = shape([[0,100],[3,100],[16,188],[24,188],[24,205],[10,205],[0,160]])
-        # #dusk_active = shape([[100,0],[100,3],[188,16],[188,24],[205,24],[205,10],[160,0]])
-        
-        if visit == '12' or visit == '15':
-            # print(visit)
-            # swirl = shape([[4,100],[6,100],[24,170],[24,188],[16,188]])
-            # #swirl = shape([[100,4],[100,6],[170,22],[185,22],[185,16]])
-            # noon_active = shape([[24,170],[28,170],[32,190],[28,205],[24,205]])
-            # #noon_active = shape([[170,24],[170,28],[190,32],[205,28],[205,24]])
-            # dusk_active = shape([[0,100],[4,100],[16,188],[24,188],[24,205],[10,205],[0,160]])
-            # #dusk_active = shape([[100,0],[100,3],[188,16],[188,24],[205,24],[205,10],[160,0]])
-            
-            # # deep rarefaction
-            # noon_12 = [[22,197],[28,197],[33,167],[30,150],[25,150]]
-            # dusk_12 = [[8,120],[22,171],[24,150],[16,120]]
-            # swirl_12 = [[0,270],[22,200],[22,171],[8,120]]
-            
-            # noon_15 = [[22,200],[26,200],[32,170],[31,168],[24,140]]
-            # dusk_15 = [[14,140],[22,173],[24,150],[16,130]]
-            # swirl_15 = [[0,270],[22,200],[22,173],[14,140]]
-            
-            # noon_avg = np.mean(np.array([noon_12, noon_15]),axis=0)
-            # dusk_avg = np.mean(np.array([dusk_12, dusk_15]),axis=0)
-            # swirl_avg = np.mean(np.array([swirl_12, swirl_15]),axis=0)
-        
-            # swirl = shape(swirl_avg)
-            # noon_active = shape(noon_avg)  
-            # dusk_active = shape(dusk_avg)
-            print('correct place')
-            
-            dusk_active = shape([[8,270],[11,230],[23,180],[24,215],[18,230],[15,270]])
-            swirl = shape([[0,90],[2,90],[15,140],[22,158],[23,180],[11,230],[8,270],[0,270]])
-            noon_active = shape([[23,180],[22,158],[27,162.5],[32.5,191.5],[30.5,201],[24,215]])
-            
-            #breakpoint()
-            
-        else:
-            # assign verticies to confine regions
-            swirl = shape([[4,100],[6,100],[24,170],[24,188],[16,188]])
-            #swirl = shape([[100,4],[100,6],[170,22],[185,22],[185,16]])
-            noon_active = shape([[24,170],[28,170],[32,190],[28,205],[24,205]])
-            #noon_active = shape([[170,24],[170,28],[190,32],[205,28],[205,24]])
-            dusk_active = shape([[0,100],[4,100],[16,188],[24,188],[24,205],[10,205],[0,160]])
-            #dusk_active = shape([[100,0],[100,3],[188,16],[188,24],[205,24],[205,10],[160,0]])
-            
-            
-        #breakpoint()
-        inside_io_footprint = shape([[0,359.9],[8,359.8],[8.4,282.3],[13.4,264.1],[19.5,251.7],[25.1,242.0],[28.5,234.7],[31.3,228.9],[34.0,224.1],[36.8,218.8],[38.7,214.3],[40.1,210.1],[40.9,205.8],
-                              [41.4,201.3],[41.2,196.4],[40.9,191.5],[40.5,187.1],[39.5,182.1],[38.0,176.9],[36.7,171.1],[34.9,165.5],[33.3,160.0],[31.7,154.0],[30.0,147.4],
-                              [28.6,140.4],[26.5,132.1],[24.6,122.9],[23.0,113.0],[21.7,102.5],[20.5,91.5],[19.8,79.7],[19.0,67.1],[17.7,53.1],[15.9,37.8],[8,0.1],[0,0]])
-                             #shape([[81.6,77.7],[76.6,95.9],[70.5,108.3],[64.9,118.0],[61.5,125.3],[58.7,131.1],[56.0,135.9],[53.2,141.2],[51.3,145.7],[49.9,149.9],[49.1,154.2],[48.6,158.7],[48.8,163.6],[49.1,168.5],[49.5,172.9],[50.5,177.9],[52.0,183.1],[53.3,188.9],[55.1,194.5],[56.7,200.0],[58.3,206.0],[60.0,212.5],[61.4,219.6],[63.5,227.9],[65.4,237.1],[67.0,247.0],[68.3,257.5],[69.5,268.5],[70.2,280.3],[71.0,292.9],[72.3,306.9],[74.1,322.2]])
-
-        # insert data into regions
-        swirl.insert_points(llats, llons, powers)
-        noon_active.insert_points(llats, llons, powers)
-        dusk_active.insert_points(llats, llons, powers)
-        
-        inside_io_footprint.insert_points(llats,llons, powers)
-        
-        '''
-        now you can get data within each shape with:
-        intensities within the shape = shapeA.intensities
-        latitudes of those intensities = shapeA.latitudes
-        longitudes of those intensities = shapeA.longitudes
-        '''
-
-
-        #print(dusk_active.intensities)
-        
-        # if plotting is on this will plot the location of all points in the
-        # grid in black, and then will highlight in different colours which
-        # of those points belong to the specified regions
-        if plotting == 'yes' or plotting == 'y' or plotting == 'Yes' or plotting == 'Y':
-            rlim=40
-            
-            radials = np.linspace(0,rlim,6,dtype='int') # get 6 evenly spaced values from 0 to rlim
-            radials = np.arange(0,rlim,10,dtype='int')
-            
-            # convert values to radians ffor plotting
-            lats_rad_swirl = (swirl.lats)
-            lat_verts_rad_swirl = np.radians(swirl.lat_verts)
-            lons_rad_swirl = np.radians(swirl.lons)
-            lon_verts_rad_swirl = np.radians(swirl.lon_verts)
-            
-            lats_rad_noon_active = (noon_active.lats)
-            lat_verts_rad_noon_active = np.radians(noon_active.lat_verts)
-            lons_rad_noon_active = np.radians(noon_active.lons)
-            lon_verts_rad_noon_active = np.radians(noon_active.lon_verts)
-            
-            lats_rad_dusk_active = (dusk_active.lats)
-            lat_verts_rad_dusk_active = np.radians(dusk_active.lat_verts)
-            lons_rad_dusk_active = np.radians(dusk_active.lons)
-            lon_verts_rad_dusk_active = np.radians(dusk_active.lon_verts)
-            
-        
-            # creature figure
-            fig = plt.figure()
-            ax = fig.add_subplot(projection='polar')
-            ax.set_theta_offset(np.pi / 2.0)
-            
-            # plot location of all grid points
-            plt.scatter(lon_rad, lat_rad, color="white", s=1, label="All Powers")
-            
-            # swirl region
-            # plt.scatter(lat_verts_rad_swirl, lon_verts_rad_swirl, color="r")
-            plt.scatter(lons_rad_swirl, lats_rad_swirl, color="r", s=1, label="Swirl Region")
-            
-            # noon active region
-            #plt.scatter(lat_verts_rad_noon_active, lon_verts_rad_noon_active, color="b")
-            plt.scatter(lons_rad_noon_active, lats_rad_noon_active, color="b", s=1, label="Noon Active Region")
-            
-            # dusk active region
-            #plt.scatter(lat_verts_rad_dusk_active, lon_verts_rad_dusk_active, color="g")
-            plt.scatter(lons_rad_dusk_active, lats_rad_dusk_active, color="g", s=1, label="Dusk Active Region")
-            
-            plt.scatter()
-            
-            # confine plot to auroral region
-            #ax.set_rlim(0,np.radians(40))
-            ax.set_rticks(np.arange(radials[1],rlim,10,dtype='int'))           
-            ax.set_rlabel_position(0) 
-        
-            '''
-            atm the vertices don't plot properly so I've commented them out
-            issue: they don't follow the polar grid when plotting
-            '''
-        
-        
-            plt.legend()
             plt.show()
             
-            
-        '''
-        plotting for histogram of intensities of each region
-        '''
-            
-            
-        if histogram == 'yes' or plotting == 'y' or plotting == 'Yes' or plotting == 'Y':
-            
-            
-            fig = plt.figure(figsize=(5,10))
-            plt.subplots_adjust(wspace=0, hspace=0.15) 
-            ax1 = fig.add_subplot(3,1,1)
-            ax1.tick_params(which='both',direction='in',bottom=True, top=True, left=True, right=True)
-            ax1.hist(swirl.intensities,bins=(0,250,500,1000,1250,1500,1750,2000,2250,2500,2700,3000),color='red',label='Swirl Region')
-            ax1.set_ylabel('Counts')
-            ax1.legend(bbox_to_anchor=[0.95,0.95])
-            
-            ax2 = fig.add_subplot(3,1,2)
-            ax2.hist(noon_active.intensities,bins=(0,250,500,1000,1250,1500,1750,2000,2250,2500,2700,3000),color='blue',label='Noon Active Region')
-            ax2.tick_params(which='both',direction='in',bottom=True, top=True, left=True, right=True)
-            ax2.set_ylabel('Counts')
-            ax2.legend(bbox_to_anchor=[0.95,0.95])
-            
-            ax3 = fig.add_subplot(3,1,3)
-            ax3.hist(dusk_active.intensities,bins=(0,250,500,1000,1250,1500,1750,2000,2250,2500,2700,3000),color='green',label='Dusk Active Region')
-            ax3.tick_params(which='both',direction='in',bottom=True, top=True, left=True, right=True)
-            ax3.set_xlabel('Intensity (kR)')
-            ax3.set_ylabel('Counts')
-            ax3.legend(bbox_to_anchor=[0.95,0.95])
-            #plt.show()
-            
-            
-            if not os.path.exists('/Users/hannah/OneDrive - Lancaster University/aurora/histrograms/'+visit_name+'/'):
-                os.makedirs('/Users/hannah/OneDrive - Lancaster University/aurora/histograms/'+visit_name+'/',exist_ok=True)
-                
-            filename = str(file)[-51:-5]   
-            saveloc = (f'/Users/hannah/OneDrive - Lancaster University/aurora/histograms/{visit_name}/'+filename+'.jpg')
-            plt.savefig(saveloc,bbox_inches='tight',dpi=400)
-            
-            
-        #if viewing_percent == 'yes' or viewing_percent == 'y':
+        # ------------------------------------------------------------------------------
+        
+        # perform limb trimming based on angle of surface vector normal to the sun
+        lonm = np.radians(np.linspace(0.,360.,num=1440))
+        latm = np.radians(np.linspace(-90.,90.,num=720))
 
+        limb_mask = np.zeros((720,1440))   # rows by columns
+        cmlr = np.radians(cml)             # convert CML to radians
+        dec  = np.radians(dece)            # convert declination angle to radians
+        for i in range(0,720):
+            limb_mask[i,:] = np.sin(latm[i])*np.sin(dec) + np.cos(latm[i])*np.cos(dec)*np.cos(lonm-cmlr)
+
+        limb_mask    = np.flip(limb_mask,axis=1)     # flip the mask horizontally, not sure why this is needed
+        cliplim = np.cos(np.radians(88.))            # set a minimum required vector normal surface-sun angle
+        clipind = np.squeeze([limb_mask >= cliplim]) # False = out of bounds (over the limb)
+    
+        image_data[clipind  == False] = np.nan  # set image array values outside clip mask to nans
+        
+            #infolist.close()                # close the file once you're done with it
+
+        im_clean = np.flip(image_data,0)
+        lons = np.arange(0,1440,1)
+        lats = np.arange(0,720,1)   # 0-40 degrees colat in image pixel res.
+        
+        im_4broject = im_clean.copy()
+        
+        if plotting == 'yes':
+            # Quick plot check of the centred, limb-trimmed image:
+            plt.figure(figsize=(8,6))
+            plt.pcolormesh(lons,lats,np.flip(np.flip(im_clean, axis=1)),cmap='cubehelix',
+                            vmin=0.,vmax=1000.)
+            plt.title('Image centred, limb-trimmed.')
+            plt.xlabel('longitude pixels')
+            plt.ylabel('co-latitude pixels')
+    
+            plt.show()
+
+        # flip image vertically if required (ease of indexing) and extract auroral region:
+        if  hem == 'north':
+            im_flip = np.flip(image_data,0)
+            image_extract = im_flip[0:160,:] # extract image in colat range 0-40 deg (4*40 = 160 pixels in image lat space):
+        elif hem == 'south':
+            image_extract = image_data[0:160,:]
             
-         
-        # swirl region
-        # mean_swirl = np.nanmean(swirl.power)
-        # median_swirl = np.nanmedian(swirl.power)
-        # total_swirl = np.nansum(swirl.power)
-        # min_swirl = np.nanmin(swirl.power)
-        # max_swirl = np.nanmax(swirl.power)
-        # range_swirl = max_swirl - min_swirl 
+        
+        im_flip[im_flip < -100] = np.nan
+        
 
-        # # noon active
-        # mean_noon_active = np.nanmean(noon_active.power)
-        # median_noon_active = np.nanmedian(noon_active.power)
-        # total_noon_active = np.nansum(noon_active.power)
-        # min_noon_active = np.nanmin(noon_active.power)
-        # max_noon_active = np.nanmax(noon_active.power)
-        # range_noon_active = max_noon_active - min_noon_active
+        if plotting == 'yes':
+            plt.figure()
+            plt.imshow(image_extract,cmap='cubehelix',vmin=0.,vmax=1000.)
+            plt.title('Auroral region extracted')
+            plt.xlabel('longitude pixels')
+            plt.ylabel('co-latitude pixels')
+            cbar = plt.colorbar(pad=0.05)
+            cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
+            plt.show()
+        
+        # ----------------
+        
+            # set up polar coords
+            rho   = np.linspace(0,40,     num=160 ) # colat vector with image pixel resolution steps
+            theta = np.linspace(0,2*np.pi,num=1440) # longitude vector in radian space and image pixel resolution steps
 
-        # # dusk active region
-        # mean_dusk_active = np.nanmean(dusk_active.power)
-        # median_dusk_active = np.nanmedian(dusk_active.power)
-        # total_dusk_active = np.nansum(dusk_active.power)   
-        # min_dusk_active = np.nanmin(dusk_active.power)
-        # max_dusk_active = np.nanmax(dusk_active.power)
-        # range_dusk_active = max_dusk_active - min_dusk_active
-        
-        swirl_power = swirl.power
-        noon_active_power = noon_active.power
-        dusk_active_power = dusk_active.power
-        
-        inside_io_footprint_power = inside_io_footprint.power
-        
-        # swirl_size = len(swirl_power)
-        # dusk_active_size = len(dusk_active_power)
-        # noon_active_size = len(noon_active_power)
-        
-        swirl_tot = len(swirl_power)
-        noon_active_tot = len(noon_active_power)
-        dusk_active_tot = len(dusk_active_power)
-        
-        swirl_size = ignore_nan_counter(swirl_power)
-        dusk_active_size = ignore_nan_counter(dusk_active_power)
-        noon_active_size = ignore_nan_counter(noon_active_power)
-         
-        #return median_swirl, range_swirl, median_noon_active, range_noon_active, median_dusk_active, range_dusk_active, time_date
-        return powers, swirl_power, noon_active_power, dusk_active_power, time_date, cml, swirl_size, noon_active_size, dusk_active_size, swirl_tot, noon_active_tot, dusk_active_tot, inside_io_footprint_power
+            plt.figure(figsize=(8,6))
+            fs = 12
+            ax = plt.subplot(projection='polar')           # initialize polar projection
+            ax.set_title('Polar projection.')
+            plt.fill_between(theta, 0, 40, alpha=0.2,hatch="/",color='gray')
+            ax.set_theta_zero_location("N")                # set angle 0.0 to top of plot
+            ax.set_xticklabels(['0','45','90','135','180','225','270','315'],
+                               fontweight='bold',fontsize=fs)
+            ax.tick_params(axis='x',pad=-1.)               # shift position of LT labels
+            ax.set_yticklabels(['','','','',''])           # turn off auto lat labels
+            ax.set_yticks([0,10,20,30,40])                    # but set grid spacing
+            ax.set_ylim([0,40])                            # max colat range
     
-def ignore_nan_counter(data):
-    count = 0
-    for i in data:
-        if not np.isnan(i):
-            count+=1
-    return count
+            # plot image data in log-colour scale:
+            # plt.pcolormesh(theta,rho,image_extract,cmap='cubehelix',
+            #                norm=LogNorm(vmin=.1,vmax=100.))
     
-# function to glob the files for each visit
-def power_evaluator(visit_list,year,prefix,extra,time):
+            # plot image data in linear colour-scale:
+            plt.pcolormesh(theta,rho,image_extract,cmap='cubehelix',
+                           vmin=0.,vmax=1000.)
     
-    # define arrays will need to store data
-    dates = []
+            # Add colourbar: 
+            cbar = plt.colorbar(ticks=[0.,100.,500.,900.],pad=0.05)
+            cbar.ax.set_yticklabels(['0','100','500','900'])
+            cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
+    
+            plt.show()
+
+        return im_flip, cml, dece, dist, pcx, pcy, pxsec, nppa, rpkm, delrpkm, oblt, cts2kr, gustin_conv_factor, gustin_conv_factor_swirl, im_4broject # may need other bits
+    
+# Load fits file and image/header ----------------------------------------------
+
+#file = '/Users/hannah/OneDrive - Lancaster University/aurora/data/2016/extract/nichols/151_v19/nopolar100/jup_16-151-13-39-57_0100_v19_stis_f25srf2_proj.fits'
+
+# ==============================================================================
+# Now at the point we can try back-projecting this projected image mask
+# (or masked-out image) using the back-project function:
+# ==============================================================================
+
+# Nicked from Jonny's pypline.py file:
+def _cylbroject(pimage, cml, dece, dmeq, xcen, ycen, psize, nppa, req, obt, ndiv=2, correct=True):
+    
+    # print(cml)
+    # print(dece)
+    # print(dmeq)
+    # print(xcen)
+    # print(ycen)
+    # print(psize)
+    # print(nppa)
+    # print(req)
+    # print(obt)
+    # print(ndiv)
+
+    if nppa == 999:
+        nppa = 0
+
+    ny, nx = pimage.shape
+    xsize, ysize = 1400, 1400
+    rimage = np.zeros((ysize, xsize))
+    cimage = np.zeros((ysize, xsize))
+
+    rad2deg = 180. / np.pi
+    deg2rad = np.pi / 180.
+
+   # # # third, calculate the pixel size. 1 au = 1.49598e8 km */
+    plen = (psize / 3600.) * deg2rad * dmeq * 1.49598e8
+    #print(plen) # in km
+
+    # # # first initialize global variables */
+    sn = np.sin(nppa * deg2rad)
+    cn = np.cos(nppa * deg2rad)
+    sd = np.sin(dece * deg2rad)
+    cd = np.cos(dece * deg2rad)
+    td = np.tan((dece + 90.0) * deg2rad)
+    a = req / plen  # /* rquatorial planet radius in  pixel scale */
+    o2 = 2.0 * obt
+    oo = obt * obt
+    a1o = a * (1.0 - obt)
+    px = 0
+    py = 0
+    ii = 0
+    jj = 0
+
+    lo = np.zeros(nx * ndiv)
+    sb = np.zeros(nx * ndiv)
+    cb = np.zeros(nx * ndiv)
+    ll = np.zeros(nx * ndiv)
+    la = np.zeros(ny * ndiv)
+    sa = np.zeros(ny * ndiv)
+    ca = np.zeros(ny * ndiv)
+    caca = np.zeros(ny * ndiv)
+    r = np.zeros(ny * ndiv)
+
+    d = 360.0 / nx / ndiv
+    d2 = 360.0 / nx / ndiv / 2.0
+    temp = (1.0 - obt) * (1.0 - obt) * td
+    for i in range(nx * ndiv):  # / * longitude * /
+        lo[i] = i * d + d2 + cml
+        sb[i] = np.sin(lo[i] * deg2rad)
+        cb[i] = np.cos(lo[i] * deg2rad)
+        ll[i] = np.arctan(temp * cb[i]) * rad2deg
+
+    d = 180.0 / ny / ndiv
+    d2 = 180.0 / ny / ndiv / 2.0
+    for i in range(ny * ndiv):  # / * latitude * /
+        la[i] = i * d + d2 - 90.0
+        sa[i] = np.sin(la[i] * deg2rad)
+        ca[i] = np.cos(la[i] * deg2rad)
+        caca[i] = ca[i] * ca[i]
+        r[i] = a1o / (1.0 - (o2 - oo) * caca[i])**0.5
+
+#  / * here's the big loop. start from the longitude corresponding to the left edge of the brojected image.
+#    that is, start from 360-cml+90 and follow down (leftward) on the pimage while the apparent longitude on the
+#    brojected image increases to the right. * /
+    for i in range(nx * ndiv):
+        if dece < 0.0:
+            start = 0
+            end = int(((ll[i] + 90.0) / 180.0 * ndiv * ny) + 1)
+        else:
+            start = int(((ll[i] + 90.0) / 180.0 * ndiv * ny))
+            end = ndiv * ny
+        for j in range(start, end):
+            x = r[j] * ca[j] * sb[i]
+            y = r[j] * sa[j]
+            z = r[j] * ca[j] * cb[i]
+            px = x
+            py = y * cd - z * sd
+            temp = px
+            px = int(px * cn - py * sn + xcen)
+            py = int(temp * sn + py * cn + ycen)
+            if (px >= 0) & (px < xsize) & (py >= 0) & (py < ysize):
+                ii = int(i / ndiv)
+                jj = int(j / ndiv)
+                value = pimage[jj, ii] / ndiv / ndiv
+                # print(i, j, ii, jj, py, px, value)
+                # return
+                rimage[py, px] += value
+
+
+#  /  *  Here, correct for area effect. Added by Juwhan Kim, 03 / 01 / 2005.
+    if correct is True:
+        value = 1.0 / ndiv / ndiv
+        for i in range(nx * ndiv):
+            if dece < 0.0:
+                start = 0
+                end = int(((ll[i] + 90.0) / 180.0 * ndiv * ny) + 1)
+            else:
+                start = int(((ll[i] + 90.0) / 180.0 * ndiv * ny))
+                end = ndiv * ny
+            for j in range(start, end):
+                x = r[j] * ca[j] * sb[i]
+                y = r[j] * sa[j]
+                z = r[j] * ca[j] * cb[i]
+                px = x
+                py = y * cd - z * sd
+                temp = px
+                px = int(px * cn - py * sn + xcen)
+                py = int(temp * sn + py * cn + ycen)
+                if (px >= 0) & (px < xsize) & (py >= 0) & (py < ysize):
+                    cimage[py, px] += value
+
+        for i in range(xsize):
+            for j in range(ysize):
+                cimval = cimage[j, i]
+                if cimval != 0:
+                    rimage[j, i] = rimage[j, i] / cimval
+
+    return rimage
+
+# this cylbroject function definition is feeding inputs into _cylbroject - ? JK
+# def cylbroject(image, ndiv=6):
+#     # self._check_image_loaded(proj=True)      # commented out JK
+#     print('Brojecting with ndiv = ', ndiv)
+#     bimage = _cylbroject(image,
+#                                   cml, dece, dist,
+#                                   pcx, pcy, pxsec,    # ***** need to define pxsec
+#                                   nppa, rpkm + delrpkm,
+#                                   oblt, ndiv, True)
+#     return bimage
+#
+#
+
+def power_calculator(visit_list,year,prefix,extra,time,region,plotting): # region
     cmls=[]
-    
-    tot_pixel_swirl=[]
-    tot_pixel_noon_active=[]
-    tot_pixel_dusk_active=[]
-    
-    tot_all_pix_swirl = []
-    tot_all_pix_noon_active=[]
-    tot_all_pix_dusk_active=[]
-    
-    inside_maxs = []
-    inside_mins = []
-    inside_medians = []
-    
-    swirl_all_powers = []
-    noon_all_powers = []
-    dusk_all_powers = []
-    
-    medians_total_swirl = []
-    medians_total_dusk_active = []
-    medians_total_noon_active = []
-    
-    means_total_swirl = []
-    means_total_dusk_active = []
-    means_total_noon_active = []
-    
-    # # used if want to compile all powers across all visits
-    # swirl_powers_all = []
-    # noon_active_powers_all = []
-    # dusk_active_powers_all = []
-    
+    deces=[]
     # loop for visits
     for i in visit_list:
-        i = str(i)
+        
+        powers = []
+        total_region = []
+        region_pixels = []
         print(f'VISIT {i} \n \n')
         
         arch = '*_v'+ i
         ti = str('/*0'+time+'*')
         visit_name = prefix+arch[-2:]
-        ab = glob.glob(f'/Users/hannah/OneDrive - Lancaster University/aurora/data/{year}/extract/{extra}'+arch+'/nopolar'+time+ti) # ab = glob.glob(f'C:/Users/moralpom/phd/data/HST/Jupiter/{year}/extract/{extra}'+arch+'/nopolar'+time+ti)
+        ab = glob.glob(f'{root_folder}data/{year}/extract/{extra}'+arch+'/nopolar'+time+ti) 
         ab.sort() 
-        
-        # arrays to store data for image loop
-        time_dates = []
-
-        inside_power = []
-        
-        swirl_powers = []
-        dusk_active_powers = []
-        noon_active_powers = []
-        
-        
+    
         # loop through each file in the visit
         for  n,i in tqdm(enumerate(ab)):
+            
+            # if n == 1:
+            #     breakpoint()
+    
             print(n)
             print(i)
             
             filename = str(i)[-51:-5]
             visit = filename[-20:-18]
-            #breakpoint()
             
-            powers, swirl_power, noon_active_power, dusk_active_power, time_date, cml, pixels_swirl, pixels_noon_active, pixels_dusk_active, swirl_tot, noon_active_tot, dusk_active_tot, inside_io_footprint_power = box_cutter(i,n,visit,visit_name,'no','no')
-            #powers = np.where(powers <= 0, np.nan, powers)
-            print(np.where(np.isinf(powers)))
-            #powers =  np.where(powers > 75*10**6,np.nan, powers)
+            # use test region
+            #i = '/Users/hannah/OneDrive - Lancaster University/aurora/data/2016/extract/nichols/137_v01/nopolar100/jup_16-137-23-43-30_0100_v01_stis_f25srf2_proj.fits'
             
+            image, cml, dece, dist, pcx, pcy, pxsec, nppa, rpkm, delrpkm, oblt, cts2kr, gustin_conv_factor, gustin_conv_factor_swirl, im_4broject = image_processing(i, n, visit, visit_name, plotting)
             
-            #### POWERS RETURNED AT THIS POINT ARE FROM A SINGLE IMAGE ####
-            
-            # store cml of image
             cmls.append(cml)
-            # save out times on each image
-            time_dates.append(time_date)
-            
-            
-            '''
-            SECTION FOR COUNTING PIXELS
-            '''
-            # how many pixels seen
-            tot_pixel_swirl.append(pixels_swirl)
-            tot_pixel_noon_active.append(pixels_noon_active)
-            tot_pixel_dusk_active.append(pixels_dusk_active)
-            
-            # how many pixels in each region
-            tot_all_pix_swirl.append(swirl_tot)
-            tot_all_pix_noon_active.append(noon_active_tot)
-            tot_all_pix_dusk_active.append(dusk_active_tot)
-            
-            
-            '''
-            SECTION FOR LOOKING AT WHOLE AURORAL REGION
-            '''
-            
-            # looking at whole auroral region
-            inside_io_power = np.ma.masked_invalid(inside_io_footprint_power).sum()
-            inside_power.append(inside_io_power)
-            
-            
-            '''
-            SECTION FOR LOOKING AT REGIONS
-            '''
-            
-            total_swirls = np.ma.masked_invalid(swirl_power).sum()
-            swirl_powers.append(total_swirls)
-            
-            total_dusk = np.ma.masked_invalid(dusk_active_power).sum()
-            dusk_active_powers.append(total_dusk)
-            
-            total_noon = np.ma.masked_invalid(noon_active_power).sum()
-            noon_active_powers.append(total_noon)
-            
-            swirl_all_powers.append(swirl_power)
-            noon_all_powers.append(noon_active_power)
-            dusk_all_powers.append(dusk_active_powers)
-            
-            
-            # medians
-            
-            
-            
- 
-            
-        
-        ##### OUTER LOOP FOR EACH VISIT ###### - ONLY RUNS ONCE IF LOOKING AT ONE VISIT
-        
-        # get midpoint for date for each visit
-        midpoint_date_time = time_dates[len(time_dates)//2]
-        dates.append(midpoint_date_time) 
-        
-        
-        '''
-        SECTION FOR LOOKING AT WHOLE AURORAL REGION
-        '''
-        
-        # calculate averages for all images in visit
-        median_inside_io = np.nanmedian(inside_power)
-        max_inside_io = np.nanmax(inside_power)
-        min_inside_io = np.nanmin(inside_power)
-        
-        # append averages to big grid for all visits
-        inside_medians.append(median_inside_io)
-        inside_maxs.append(max_inside_io)
-        inside_mins.append(min_inside_io)
-        
-        
-        '''
-        SECTION FOR LOOKING AT REGIONS - CURRENTLY NOT USED / RETURNED
-        '''
-        
-        # # median - median in this case is the median for each visit from the total per image
-        
-        # median_total_swirl = np.nanmedian(swirl_powers)
-        # medians_total_swirl.append(median_total_swirl)
-        
-        # median_total_dusk = np.nanmedian(dusk_active_powers)
-        # medians_total_dusk_active.append(median_total_dusk)
-        
-        # median_total_noon = np.nanmedian(noon_active_powers)
-        # medians_total_noon_active.append(median_total_noon)
-        
-        # mean_total_swirl = np.nanmean(swirl_powers)
-        # means_total_swirl.append(mean_total_swirl)
-        
-        # mean_total_dusk = np.nanmean(dusk_active_powers)
-        # means_total_dusk_active.append(mean_total_dusk)
-        
-        # mean_total_noon = np.nanmean(noon_active_powers)
-        # means_total_noon_active.append(mean_total_noon)
-    
-        # #  append total power values from each visit into a grid for all visits
-        # total_swirl_active_all.append(total_swirl)
-        # total_noon_active_all.append(total_noon_active)
-        # total_dusk_active_all.append(total_dusk_active)
-        
-        # # append power values to make list of list - list of powers per image for each visit (probably a bad idea)
-        # swirl_powers_all.append(swirl_powers)
-        # dusk_active_powers_all.append(dusk_active_powers)
-        # noon_active_powers_all.append(noon_active_powers)
-    
-            
-        
-    return powers, cmls, dates, swirl_powers, dusk_active_powers, noon_active_powers, inside_power, inside_maxs, inside_mins, inside_medians, tot_pixel_swirl, tot_pixel_noon_active, tot_pixel_dusk_active, tot_all_pix_swirl, tot_all_pix_noon_active, tot_all_pix_dusk_active, swirl_all_powers, noon_all_powers, dusk_all_powers#, medians_total_swirl, medians_total_dusk_active, medians_total_noon_active, means_total_swirl, means_total_dusk_active, means_total_noon_active
+            deces.append(dece)
 
+            distance_squared = (dist * au_to_km)**2          # AU in km
 
+            im_full, tot_size, num_px = apply_mask(region, image, visit, plotting)
+            
+            total_region.append(tot_size)
+            region_pixels.append(num_px)
+            
+            def cylbroject(image, ndiv=2):
+                # self._check_image_loaded(proj=True)      # commented out JK
+                print('Brojecting with ndiv = ', ndiv)
+                bimage = _cylbroject(image,
+                                              cml, dece, dist,
+                                              pcx, pcy, pxsec,    # ***** need to define pxsec
+                                              nppa, rpkm + delrpkm,
+                                              oblt, ndiv, True)
+                return bimage
+            
+            #breakpoint()
+            bimage = cylbroject(np.flip(np.flip(im_full, axis=1)), ndiv=2)   # flips required to get bimage looking right?
+            #full_image = cylbroject(np.flip(np.flip(im_4broject, axis=1)), ndiv=2)
+            #bimage = cylbroject(np.flip(im_full),ndiv=2)
+            #breakpoint()
+
+            if plotting == 'yes':
+            
+                plt.figure()
+                plt.title('Image array in fits file.')
+                plt.imshow(bimage, cmap='cubehelix',origin='lower')
+                plt.show()
+                
+                # plt.figure()
+                # plt.title('Brojected full image.')
+                # plt.imshow(full_image, cmap='cubehelix',origin='lower',vmin=0,vmax=1000)
+                # plt.xlabel('pixels')
+                # plt.ylabel('pixels')
+                # cbar = plt.colorbar(pad=0.05)
+                # cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
+
+                # # plt.colorbar()
+                # # cbar = plt.colorbar(pad=0.05)
+                # # cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
+                # fignamei = 'broject_full.pdf'
+                # plt.savefig(fignamei, dpi=350) #, bbox_inches='tight')  
+
+                # plt.show()
+                
+            print(np.nansum(bimage))
+            if region == 'swirl':
+                print('Using CR 12')
+                # colour ratio 12
+                total_power_emitted_from_roi = np.nansum(bimage) * (1/5120) * distance_squared * gustin_conv_factor_swirl / 1e9
+            else:
+                print('Using CR 2.5')
+                # colour ratio 2.5
+                # calculate emitted power from ROI in GW (exposure time not required here as kR intensities are per second):
+                total_power_emitted_from_roi = np.nansum(bimage) * cts2kr * distance_squared * gustin_conv_factor / 1e9
+
+            print('Total power emitted from ROI in GW:')
+            print(total_power_emitted_from_roi)
+            
+            powers.append(total_power_emitted_from_roi)
+            
+            # # swirl region
+            # swirl_full = apply_mask('swirl', image, visit, plotting)
+
+            # # Try and see  what happens! Not sure if image input needs to be full [1440,720] , centred projection?
+            # simage = cylbroject(np.flip(swirl_full),ndiv=2)
+            # #bimage = cylbroject(image_centred,ndiv=2)
+            # print('Swirl Successfully Projected')
+
+            # plt.figure()
+            # plt.title('Image array in fits file.')
+            # plt.imshow(simage, cmap='cubehelix',origin='lower')
+            # # plt.colorbar()
+            # # cbar = plt.colorbar(pad=0.05)
+            # # cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
+            # plt.show()
+
+            # # calculate emitted power from ROI in GW (exposure time not required here as kR intensities are per second):
+            # total_power_swirl = np.nansum(simage) * cts2kr * distance_squared * gustin_conv_factor / 1e9
+            
+            # swirl_powers.append(total_power_swirl)
+            
+            # # --------------------            
+
+            # # dusk active region
+            # dusk_full = apply_mask('dusk', image, visit, plotting)
+
+            # # Try and see  what happens! Not sure if image input needs to be full [1440,720] , centred projection?
+            # dimage = cylbroject(np.flip(dusk_full),ndiv=2)
+            # #bimage = cylbroject(image_centred,ndiv=2)
+            # print('Dusk Successfully Projected')
+
+            # plt.figure()
+            # plt.title('Image array in fits file.')
+            # plt.imshow(dimage, cmap='cubehelix',origin='lower')
+            # # plt.colorbar()
+            # # cbar = plt.colorbar(pad=0.05)
+            # # cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
+            # plt.show()
+
+            # # calculate emitted power from ROI in GW (exposure time not required here as kR intensities are per second):
+            # total_power_dusk = np.nansum(dimage) * cts2kr * distance_squared * gustin_conv_factor / 1e9
+            
+            # dusk_powers.append(total_power_dusk)
+            
+            # # --------------------    
+            
+            # # noon active region
+            # noon_full = apply_mask('noon', image, visit, plotting)
+
+            # # Try and see  what happens! Not sure if image input needs to be full [1440,720] , centred projection?
+            # nimage = cylbroject(np.flip(noon_full),ndiv=2)
+            # #bimage = cylbroject(image_centred,ndiv=2)
+            # print('Noon Successfully Projected')
+
+            # plt.figure()
+            # plt.title('Image array in fits file.')
+            # plt.imshow(nimage, cmap='cubehelix',origin='lower')
+            # # plt.colorbar()
+            # # cbar = plt.colorbar(pad=0.05)
+            # # cbar.ax.set_ylabel('Intensity [kR]',fontsize=12)
+            # plt.show()
+    
+            # # calculate emitted power from ROI in GW (exposure time not required here as kR intensities are per second):
+            # total_power_noon = np.nansum(nimage) * cts2kr * distance_squared * gustin_conv_factor / 1e9
+            
+            # noon_powers.append(total_power_noon)
+
+    return powers, cmls, deces, total_region, region_pixels #swirl_powers, dusk_powers, noon_powers, 
+    
+
+# user input to access right file
 year = input("Year of the visit:  \n")
 if year == '2016':
     pre = input('Campaign from Jonny or Denis? (1/2)  ')
@@ -629,114 +994,36 @@ elif year == '2022':
     prefix = 'oeow'
     extra = ''
 time = str(input('Exposure time (in seconds: 10, 30, 100...): \n'))
+#region = str(input("Region of Interest:  \n"))
 
-    
-powers, cmls, dates, swirl_powers, dusk_active_powers, noon_active_powers, inside_power, inside_maxs, inside_mins, inside_medians, tot_pixel_swirl, tot_pixel_noon_active, tot_pixel_dusk_active, tot_all_pix_swirl, tot_all_pix_noon_active, tot_all_pix_dusk_active, swirl_all_powers, noon_all_powers, dusk_all_powers = power_evaluator(visit_list,year,prefix,extra,time) #, medians_total_swirl, medians_total_dusk_active, medians_total_noon_active, means_total_swirl, means_total_dusk_active, means_total_noon_active
 
-##### 
+# # ==============================================================================
+# # Once the back-projected image looks OK, we can proceed with the emission power
+# # calculation here.
+# # ==============================================================================
+#
+# # ISOLATE THE ROI INTENSITIES IN A FULL 1440*720 PROJECTED IMAGE (all other pixels set to nans)
 
+swirl_powers, cmls, deces, total_swirl, swirl_pixels = power_calculator(visit_list,year,prefix,extra,time,'swirl','no') # region
+noon_powers, cmls, deces, total_noon, noon_pixels = power_calculator(visit_list,year,prefix,extra,time,'noon','no')
+dusk_powers, cmls, deces, total_dusk, dusk_pixels = power_calculator(visit_list,year,prefix,extra,time,'dusk','no')
 '''
-SECTION FOR COUNTING PIXELS
-'''
-
-# change to array format to calculate percentages
-tot_pixel_swirl = np.array(tot_pixel_swirl)
-tot_all_pix_swirl = np.array(tot_all_pix_swirl)
-
-tot_pixel_noon_active = np.array(tot_pixel_noon_active)
-tot_all_pix_noon_active = np.array(tot_all_pix_noon_active)
-
-tot_pixel_dusk_active = np.array(tot_pixel_dusk_active)
-tot_all_pix_dusk_active = np.array(tot_all_pix_dusk_active)
-
-# percentage calculation for pixels seen
-percentage_swirl = (tot_pixel_swirl/tot_all_pix_swirl)*100
-percentage_noon_active = (tot_pixel_noon_active/tot_all_pix_noon_active)*100
-percentage_dusk_active = (tot_pixel_dusk_active/tot_all_pix_dusk_active)*100
-
-
-
-
-###### DATAFRAMES ########
-
-
-'''
-TOTAL POWER AVERAGES ACROSS AURORAL REGION
-'''
-
-# # put in new dataframe
-# average_power_data_df = pd.DataFrame()
-
-# average_power_data_df = average_power_data_df.assign(Date=dates)
-# average_power_data_df = average_power_data_df.assign(Medians=inside_medians)
-# average_power_data_df = average_power_data_df.assign(Mins=inside_mins)
-# average_power_data_df = average_power_data_df.assign(Maxs=inside_maxs)
-
-# # export dataframe to read into other files
-# average_power_data_df.to_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/average_power_data_intensity_inside_io.csv',index=False)
-
-
-'''
-TOTAL POWER ACROSS AURORAL REGION PER IMAGE
-'''
-
-# total_power_data_df = pd.DataFrame()
-
-# total_power_data_df = total_power_data_df.assign(CML=cmls)
-# total_power_data_df = total_power_data_df.assign(Total_Power=inside_power)
-
-# total_power_data_df.to_csv(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/total_power_data_intensity_inside_io_{visit}.csv',index=False)
-
-
-
-'''
-PIXEL COUNT PER REGION
-'''
-
-# # data frame for total pixel percentage/ratio
-# total_pixels_df = pd.DataFrame()
-
-# total_pixels_df = total_pixels_df.assign(CML=cmls)
-# total_pixels_df = total_pixels_df.assign(Pixels_Seen_Swirl_Region=tot_pixel_swirl)
-# total_pixels_df = total_pixels_df.assign(Pixels_Tot_Swirl_Region=tot_all_pix_swirl)
-# total_pixels_df = total_pixels_df.assign(Percentage_Seen_Swirl_Region=percentage_swirl)
-# total_pixels_df = total_pixels_df.assign(Pixels_Seen_Noon_Active=tot_pixel_noon_active)
-# total_pixels_df = total_pixels_df.assign(Pixels_Tot_Noon_active_Region=tot_all_pix_noon_active)
-# total_pixels_df = total_pixels_df.assign(Percentage_Seen_Noon_Active_Region=percentage_noon_active)
-# total_pixels_df = total_pixels_df.assign(Pixels_Seen_Dusk_Active=tot_pixel_dusk_active)
-# total_pixels_df = total_pixels_df.assign(Pixels_Tot_Dusk_Active_Region=tot_all_pix_dusk_active)
-# total_pixels_df = total_pixels_df.assign(Percentage_Seen_Dusk_Active_Region=percentage_dusk_active)
-
-# # export
-# total_pixels_df.to_csv('/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/main_regions_pixels_seen.csv',index=False)
-
-
-'''
-ALL POWER VALUES PER REGION
-'''
-
-# # dataframe for actual power values
-# power_values_df = pd.DataFrame()
-
-# power_values_df = power_values_df.assign(CML=cmls)
-# power_values_df = power_values_df.assign(Swirl_Powers=swirl_all_powers)
-# power_values_df = power_values_df.assign(Dusk_Active_Powers=dusk_all_powers)
-# power_values_df = power_values_df.assign(Noon_Active_Powers=noon_all_powers)
-
-# power_values_df.to_csv(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/power_values_{visit}_df.csv',index=False)
-
-
-'''
-TOTAL POWER PER REGION PER IMAGE
-'''
+#test_powers, cmls, deces = power_calculator(visit_list,year,prefix,extra,time,'test','yes')
 
 #dataframe for total power per image
 total_power_regions_df = pd.DataFrame()
 
 total_power_regions_df = total_power_regions_df.assign(CML=cmls)
+total_power_regions_df = total_power_regions_df.assign(DECE=deces)
 total_power_regions_df = total_power_regions_df.assign(Total_Power_Swirl=swirl_powers)
-total_power_regions_df = total_power_regions_df.assign(Total_Power_Noon_Active=noon_active_powers)
-total_power_regions_df = total_power_regions_df.assign(Total_Power_Dusk_Active=dusk_active_powers)
+total_power_regions_df = total_power_regions_df.assign(Total_Region_Swirl=total_swirl)
+total_power_regions_df = total_power_regions_df.assign(Total_Pixels_Swirl=swirl_pixels)
+total_power_regions_df = total_power_regions_df.assign(Total_Power_Noon_Active=noon_powers)
+total_power_regions_df = total_power_regions_df.assign(Total_Region_Noon=total_noon)
+total_power_regions_df = total_power_regions_df.assign(Total_Pixels_Noon=noon_pixels)
+total_power_regions_df = total_power_regions_df.assign(Total_Power_Dusk_Active=dusk_powers)
+total_power_regions_df = total_power_regions_df.assign(Total_Region_Dusk=total_dusk)
+total_power_regions_df = total_power_regions_df.assign(Total_Pixels_Dusk=dusk_pixels)
 
-total_power_regions_df.to_csv(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/total_power_values_regions_test{visit}_df.csv',index=False)
-#(f'/Users/hannah/OneDrive - Lancaster University/aurora/python_scripts/dataframes/total_power_values_regions_{visit}_df.csv',index=False)
+total_power_regions_df.to_csv(f'{root_folder}python_scripts/dataframes/new_total_powers_regions_{visit}_CR_adj_26update.csv',index=False)
+'''
