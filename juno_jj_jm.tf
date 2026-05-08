@@ -1,0 +1,42 @@
+   \begindata
+
+      FRAME_JUNO_JJ               = -61097
+      FRAME_-61097_NAME            = 'JUNO_JJ'
+      FRAME_-61097_CLASS           = 5
+      FRAME_-61097_CLASS_ID        = -61097
+      FRAME_-61097_CENTER          = 599
+      FRAME_-61097_RELATIVE        = 'J2000'
+      FRAME_-61097_DEF_STYLE       = 'PARAMETERIZED'
+      FRAME_-61097_FAMILY          = 'TWO-VECTOR'
+      FRAME_-61097_PRI_AXIS        = 'X'
+      FRAME_-61097_PRI_VECTOR_DEF  = 'OBSERVER_TARGET_POSITION'
+      FRAME_-61097_PRI_OBSERVER    = 'JUPITER'
+      FRAME_-61097_PRI_TARGET      = 'SUN'
+      FRAME_-61097_PRI_ABCORR      = 'NONE'
+      FRAME_-61097_SEC_AXIS        = 'Z'
+      FRAME_-61097_SEC_VECTOR_DEF  = 'CONSTANT'
+      FRAME_-61097_SEC_FRAME       = 'IAU_JUPITER'
+      FRAME_-61097_SEC_SPEC        = 'RECTANGULAR'
+      FRAME_-61097_SEC_VECTOR      =  ( 0, 0, 1 )
+
+      FRAME_JUNO_JM               = -61098
+      FRAME_-61098_NAME            = 'JUNO_JM'
+      FRAME_-61098_CLASS           = 5
+      FRAME_-61098_CLASS_ID        = -61098
+      FRAME_-61098_CENTER          = 599
+      FRAME_-61098_RELATIVE        = 'J2000'
+      FRAME_-61098_DEF_STYLE       = 'PARAMETERIZED'
+      FRAME_-61098_FAMILY          = 'TWO-VECTOR'
+      FRAME_-61098_PRI_AXIS        = 'X'
+      FRAME_-61098_PRI_VECTOR_DEF  = 'OBSERVER_TARGET_POSITION'
+      FRAME_-61098_PRI_OBSERVER    = 'JUPITER'
+      FRAME_-61098_PRI_TARGET      = 'SUN'
+      FRAME_-61098_PRI_ABCORR      = 'NONE'
+      FRAME_-61098_SEC_AXIS        = 'Z'
+      FRAME_-61098_SEC_VECTOR_DEF  = 'CONSTANT'
+      FRAME_-61098_SEC_FRAME       = 'JUNO_MAG_VIP4'
+      FRAME_-61098_SEC_SPEC        = 'RECTANGULAR'
+      FRAME_-61098_SEC_VECTOR      =  ( 0, 0, 1 )
+
+   \begintext
+   
