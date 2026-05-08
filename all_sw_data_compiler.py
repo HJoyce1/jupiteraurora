@@ -26,7 +26,7 @@ spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/naif0012.tls"
 spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/pck00010.tpc")
 # this one has cooridinate systems in it
 spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/juno_v12.tf")
-spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/temp.tf")
+spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/juno_jj_jm.tf") # custom coordinate frames in jupiter frame, thanks to Rob Wilson
 # juno location
 spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/spk_rec_160522_160729_160909.bsp")
 spice.furnsh("/Users/hannah/OneDrive - Lancaster University/aurora/spk_rec_160312_160522_160614.bsp")
